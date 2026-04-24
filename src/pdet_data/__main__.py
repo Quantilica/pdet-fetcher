@@ -17,6 +17,7 @@ from . import (
     list_rais,
     list_rais_docs,
 )
+from .wrangling import convert_caged, convert_rais, extract_columns_for_dataset
 
 logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
 
@@ -56,6 +57,55 @@ def fetch_cmd(args):
         ftp.close()
 
 
+def convert_cmd(args):
+    convert_rais(args.data_dir, args.dest_dir)
+    convert_caged(args.data_dir, args.dest_dir)
+
+
+DATASETS = {
+    "rais-estabelecimentos": {
+        "glob_pattern": "rais-*.*",
+        "has_uf": True,
+        "encoding": "latin-1",
+    },
+    "rais-vinculos": {
+        "glob_pattern": "rais-*.*",
+        "has_uf": True,
+        "encoding": "latin-1",
+    },
+    "caged": {
+        "glob_pattern": "caged_*.*",
+        "has_uf": False,
+        "encoding": "latin-1",
+    },
+    "caged-ajustes": {
+        "glob_pattern": "caged-ajustes_*.*",
+        "has_uf": False,
+        "encoding": "latin-1",
+    },
+    "caged-2020": {
+        "glob_pattern": "caged-2020-*.*",
+        "has_uf": False,
+        "encoding": "utf-8",
+    },
+}
+
+
+def columns_cmd(args):
+    if args.dataset not in DATASETS:
+        raise ValueError(f"Unknown dataset: {args.dataset}")
+
+    config = DATASETS[args.dataset]
+    output_file = args.output_dir / f"{args.dataset}-columns.csv"
+    extract_columns_for_dataset(
+        args.data_dir,
+        config["glob_pattern"],
+        output_file,
+        encoding=config["encoding"],
+        has_uf=config["has_uf"],
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Fetch and list Brazilian labor market microdata from PDET"
@@ -77,6 +127,38 @@ def main():
         help="Destination directory reference (to check what's already downloaded)",
     )
     list_parser.set_defaults(func=list_files_cmd)
+
+    convert_parser = subparsers.add_parser("convert", help="Convert raw data files to Parquet")
+    convert_parser.add_argument(
+        "data_dir",
+        type=Path,
+        help="Source directory with raw (compressed) data files",
+    )
+    convert_parser.add_argument(
+        "dest_dir",
+        type=Path,
+        help="Destination directory for converted Parquet files",
+    )
+    convert_parser.set_defaults(func=convert_cmd)
+
+    columns_parser = subparsers.add_parser("columns", help="Extract column names from raw data files")
+    columns_parser.add_argument(
+        "data_dir",
+        type=Path,
+        help="Source directory with raw (compressed) data files",
+    )
+    columns_parser.add_argument(
+        "dataset",
+        help=f"Dataset name ({', '.join(DATASETS.keys())})",
+    )
+    columns_parser.add_argument(
+        "-o",
+        "--output-dir",
+        type=Path,
+        default=Path.cwd(),
+        help="Directory to write columns CSV (default: current directory)",
+    )
+    columns_parser.set_defaults(func=columns_cmd)
 
     args = parser.parse_args()
 

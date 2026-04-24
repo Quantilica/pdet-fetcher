@@ -15,9 +15,13 @@ from .fetch import (
     list_rais,
     list_rais_docs,
 )
+from .wrangling import convert_caged, convert_rais, extract_columns_for_dataset
 
 __all__ = [
     "connect",
+    "convert_caged",
+    "convert_rais",
+    "extract_columns_for_dataset",
     "fetch_caged",
     "fetch_caged_2020",
     "fetch_caged_2020_docs",

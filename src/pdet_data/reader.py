@@ -86,6 +86,13 @@ def _fix_ragged_csv(filepath: Path, encoding: str) -> Path:
     return dest_filepath
 
 
+def _sniff_separator(filepath: Path, encoding: str) -> str:
+    with open(filepath, "r", encoding=encoding, errors="replace") as f:
+        first_line = f.readline()
+    counts = {sep: first_line.count(sep) for sep in (";", "\t", ",")}
+    return max(counts, key=counts.__getitem__)
+
+
 def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.DataFrame:
     if dataset == "vinculos":
         columns_names = list(RAIS_VINCULOS_COLUMNS.values())[-1]
@@ -102,11 +109,12 @@ def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.Da
     else:
         raise ValueError(f"Unknown RAIS dataset: {dataset!r}")
     print("Reading", dataset, filepath)
+    separator = _sniff_separator(filepath, encoding="latin1")
     df = pl.read_csv(
         filepath,
         has_header=True,
         new_columns=columns_names,
-        separator=";",
+        separator=separator,
         encoding="latin1",
         null_values=NA_VALUES,
         infer_schema_length=0,

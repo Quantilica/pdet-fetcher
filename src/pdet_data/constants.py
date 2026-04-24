@@ -968,6 +968,31 @@ RAIS_ESTABELECIMENTOS_COLUMNS = {
         "subsetor_ibge",
         "cep",
     ),
+    2023: (
+        "bairros_sp",
+        "bairros_fortaleza",
+        "bairros_rj",
+        "cnae_2",
+        "cnae_1",
+        "distritos_sp",
+        "quantidade_vinculos_clt",
+        "quantidade_vinculos_ativos",
+        "quantidade_vinculos_estatutarios",
+        "indicador_atividade_ano",
+        "indicador_cei_vinculado",
+        "indicador_pat",
+        "indicador_rais_negativa",
+        "indicador_simples",
+        "id_municipio_6",
+        "natureza_juridica",
+        "regioes_administrativas_df",
+        "cnae_2_subclasse",
+        "tamanho",
+        "tipo",
+        "id_uf",
+        "subsetor_ibge",
+        "cep",
+    )
 }
 
 CAGED_COLUMNS = {

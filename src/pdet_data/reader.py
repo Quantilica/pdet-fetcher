@@ -88,15 +88,19 @@ def _fix_ragged_csv(filepath: Path, encoding: str) -> Path:
 
 def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.DataFrame:
     if dataset == "vinculos":
+        columns_names = list(RAIS_VINCULOS_COLUMNS.values())[-1]
         for y in RAIS_VINCULOS_COLUMNS:
             if year < y:
                 break
             columns_names = RAIS_VINCULOS_COLUMNS[y]
     elif dataset == "estabelecimentos":
+        columns_names = list(RAIS_ESTABELECIMENTOS_COLUMNS.values())[-1]
         for y in RAIS_ESTABELECIMENTOS_COLUMNS:
             if year < y:
                 break
             columns_names = RAIS_ESTABELECIMENTOS_COLUMNS[y]
+    else:
+        raise ValueError(f"Unknown RAIS dataset: {dataset!r}")
     print("Reading", dataset, filepath)
     df = pl.read_csv(
         filepath,
@@ -117,34 +121,41 @@ def read_caged(
 ) -> pl.DataFrame:
     if dataset == "caged":
         encoding = "latin-1"
+        columns_names = list(CAGED_COLUMNS.values())[-1]
         for d in CAGED_COLUMNS:
             if date < d:
                 break
             columns_names = CAGED_COLUMNS[d]
     elif dataset == "caged-ajustes":
         encoding = "latin-1"
+        columns_names = list(CAGED_AJUSTES_COLUMNS.values())[-1]
         for d in CAGED_AJUSTES_COLUMNS:
             if date < d:
                 break
             columns_names = CAGED_AJUSTES_COLUMNS[d]
     elif dataset == "caged-2020-exc":
         encoding = "utf-8"
+        columns_names = list(CAGED_2020_EXC_COLUMNS.values())[-1]
         for d in CAGED_2020_EXC_COLUMNS:
             if date < d:
                 break
             columns_names = CAGED_2020_EXC_COLUMNS[d]
     elif dataset == "caged-2020-for":
         encoding = "utf-8"
+        columns_names = list(CAGED_2020_FOR_COLUMNS.values())[-1]
         for d in CAGED_2020_FOR_COLUMNS:
             if date < d:
                 break
             columns_names = CAGED_2020_FOR_COLUMNS[d]
     elif dataset == "caged-2020-mov":
         encoding = "utf-8"
+        columns_names = list(CAGED_2020_MOV_COLUMNS.values())[-1]
         for d in CAGED_2020_MOV_COLUMNS:
             if date < d:
                 break
             columns_names = CAGED_2020_MOV_COLUMNS[d]
+    else:
+        raise ValueError(f"Unknown CAGED dataset: {dataset!r}")
 
     print("Reading", dataset, filepath)
     if filepath.name in RAGGED_CSV_FILES:
@@ -180,12 +191,22 @@ def decompress(file_metadata: dict[str, Any]) -> dict[str, Path]:
         str(compressed_filepath),
         f"-o{tmp_dir}",
     ]
-    subprocess.run(
+    result = subprocess.run(
         command,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    decompressed_filepath = next(tmp_dir.iterdir())
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"7z failed decompressing {compressed_filepath}: "
+            f"{result.stderr.decode(errors='replace')}"
+        )
+    extracted = list(tmp_dir.iterdir())
+    if not extracted:
+        raise RuntimeError(
+            f"7z produced no files from {compressed_filepath}"
+        )
+    decompressed_filepath = extracted[0]
     return file_metadata | {
         "tmp_dir": tmp_dir,
         "decompressed_filepath": decompressed_filepath,

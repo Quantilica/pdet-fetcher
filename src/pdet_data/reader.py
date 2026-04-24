@@ -63,7 +63,7 @@ def convert_columns_dtypes(df: pl.DataFrame) -> pl.DataFrame:
         elif column in BOOLEAN_COLUMNS:
             df = df.with_columns(pl.col(column).cast(pl.Int8).cast(pl.Boolean))
         else:  # Categorical
-            df = df.with_columns(pl.col(column).str.strip_chars())
+            df = df.with_columns(pl.col(column).str.strip_chars().cast(pl.Categorical))
     return df
 
 

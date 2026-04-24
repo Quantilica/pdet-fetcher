@@ -23,17 +23,19 @@ def convert_rais_directory(data_raw_rais_year_dir: Path, dataset: str, dest_inte
     if dest_filepath.exists():
         return
 
-    data = pl.DataFrame()
-    for file_metadata in files:
-        decompressed = reader.decompress(file_metadata)
-        decompressed_filepath = decompressed["decompressed_filepath"]
-        df = reader.read_rais(
-            decompressed_filepath,
-            year=year,
-            dataset=dataset,
-        )
-        data = pl.concat([data, df], how="vertical")
-        shutil.rmtree(decompressed["tmp_dir"])
+    with pl.StringCache():
+        frames = []
+        for file_metadata in files:
+            decompressed = reader.decompress(file_metadata)
+            decompressed_filepath = decompressed["decompressed_filepath"]
+            df = reader.read_rais(
+                decompressed_filepath,
+                year=year,
+                dataset=dataset,
+            )
+            frames.append(df)
+            shutil.rmtree(decompressed["tmp_dir"])
+        data = pl.concat(frames, how="vertical")
 
     reader.write_parquet(data, dest_filepath)
 

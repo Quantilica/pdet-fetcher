@@ -111,20 +111,31 @@ def fetch_file(ftp: ftplib.FTP, ftp_filepath: str, dest_filepath: Path, **kwargs
 
 
 def _get_date_dirs(
-    fi: list[dict], dir_pattern: str, dir_pattern_groups: Sequence[str]
+    fi: list[dict],
+    dir_pattern: str | Sequence[str],
+    dir_pattern_groups: Sequence[str] | Sequence[Sequence[str]],
 ) -> list[dict]:
     """Filters list of directories in FTP server that groups files by date."""
+    if isinstance(dir_pattern, str):
+        patterns = [dir_pattern]
+        groups_list = [dir_pattern_groups]
+    else:
+        patterns = dir_pattern
+        groups_list = dir_pattern_groups
+
     date_dirs = []
     for f in fi:
         if f["size"] is not None:
             continue
-        m = re.match(dir_pattern, f["name"])
-        if m:
-            group_meta = {"dir": f["name"]}
-            for i, group in enumerate(dir_pattern_groups):
-                text = m.groups()[i]
-                group_meta.update({group: text})
-            date_dirs.append(group_meta)
+        for pattern, groups in zip(patterns, groups_list):
+            m = re.match(pattern, f["name"])
+            if m:
+                group_meta = {"dir": f["name"]}
+                for i, group in enumerate(groups):
+                    text = m.groups()[i]
+                    group_meta.update({group: text})
+                date_dirs.append(group_meta)
+                break
     return date_dirs
 
 

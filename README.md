@@ -42,12 +42,6 @@ Os microdados da PDET vêm em formatos legados (7z, ZIP) com características es
 ## 📦 Instalação
 
 ```bash
-pip install pdet-data
-```
-
-Ou para desenvolvimento:
-
-```bash
 # Clone o repositório
 git clone https://github.com/dankkom/pdet-data.git
 cd pdet-data
@@ -56,7 +50,26 @@ cd pdet-data
 pip install -e .
 ```
 
-**Requisitos**: Python 3.10+
+**Requisitos**: Python 3.10+ e `7z` no PATH (usado por `convert_*` para extrair os arquivos baixados).
+
+---
+
+## 🛠️ CLI
+
+O pacote instala o comando `pdet-data` (também acessível via `python -m pdet_data`) com quatro subcomandos:
+
+```text
+pdet-data <subcommand> [args]
+
+Subcommands:
+  fetch    DEST_DIR              Baixa todo o RAIS e CAGED (dados + docs) para DEST_DIR
+  list     DEST_DIR              Lista no FTP o que ainda falta baixar em DEST_DIR
+  convert  DATA_DIR DEST_DIR     Descompacta e converte CSVs em Parquet
+  columns  DATA_DIR DATASET [-o OUT_DIR]
+                                 Extrai os nomes de colunas de cada arquivo do dataset
+```
+
+`DATASET` em `columns` aceita: `rais-vinculos`, `rais-estabelecimentos`, `caged`, `caged-ajustes`, `caged-2020`.
 
 ---
 
@@ -64,25 +77,31 @@ pip install -e .
 
 ### 1️⃣ Baixar todos os microdados
 
-```python
-from pathlib import Path
-from pdet_data import fetch
-
-# Conecta ao FTP do MTPS
-ftp = fetch.connect()
-
-# Baixa RAIS, CAGED e documentação
-fetch.fetch_rais(ftp=ftp, dest_dir=Path("./dados"))
-fetch.fetch_caged(ftp=ftp, dest_dir=Path("./dados"))
-fetch.fetch_caged_2020(ftp=ftp, dest_dir=Path("./dados"))
-
-ftp.close()
+```bash
+pdet-data fetch ./dados
 ```
 
-Ou pela linha de comando:
+Equivalente em Python:
 
-```bash
-python -m pdet_data run -data-dir ./dados
+```python
+from pathlib import Path
+from pdet_data import (
+    connect,
+    fetch_rais, fetch_rais_docs,
+    fetch_caged, fetch_caged_docs,
+    fetch_caged_2020, fetch_caged_2020_docs,
+)
+
+ftp = connect()
+try:
+    fetch_rais(ftp=ftp, dest_dir=Path("./dados"))
+    fetch_rais_docs(ftp=ftp, dest_dir=Path("./dados"))
+    fetch_caged(ftp=ftp, dest_dir=Path("./dados"))
+    fetch_caged_docs(ftp=ftp, dest_dir=Path("./dados"))
+    fetch_caged_2020(ftp=ftp, dest_dir=Path("./dados"))
+    fetch_caged_2020_docs(ftp=ftp, dest_dir=Path("./dados"))
+finally:
+    ftp.close()
 ```
 
 ### 2️⃣ Ler dados RAIS
@@ -110,18 +129,29 @@ top_setores = df.group_by("cnae_setor").agg(
 print(top_setores)
 ```
 
-### 3️⃣ Ler dados CAGED
+### 3️⃣ Ler dados CAGED (clássico ou 2020+)
+
+`read_caged` lê todas as variantes através do parâmetro `dataset`
+(`caged`, `caged-ajustes`, `caged-2020-mov`, `caged-2020-for`, `caged-2020-exc`):
 
 ```python
 from pathlib import Path
 import polars as pl
-from pdet_data.reader import read_caged, read_caged_2020
+from pdet_data.reader import read_caged
 
 # CAGED clássico (até 2019)
-df_caged = read_caged(Path("dados/caged_202012.csv"))
+df_caged = read_caged(
+    Path("dados/caged_201812.csv"),
+    date=201812,
+    dataset="caged",
+)
 
-# CAGED 2020+ (novo formato)
-df_mov = read_caged_2020(Path("dados/caged_mov_202401.csv"))
+# Novo CAGED — movimentações de janeiro/2024
+df_mov = read_caged(
+    Path("dados/cagedmov_202401.csv"),
+    date=202401,
+    dataset="caged-2020-mov",
+)
 
 # Analisar: saldo de emprego por UF
 saldo = df_mov.with_columns(
@@ -238,79 +268,56 @@ print(evolucao)
 ## 🏗️ Arquitetura
 
 ```
-pdet_data/
-├── fetch.py           # Conexão FTP e download de arquivos
-├── reader.py          # Leitura e processamento de CSVs
-├── storage.py         # Gerenciamento de paths e locais de armazenamento
-├── constants.py       # Nomes de colunas, valores faltantes, tipos por ano
-├── meta.py            # Metadados dos datasets
-└── __init__.py
+src/pdet_data/
+├── __init__.py        # Re-exports da API pública
+├── __main__.py        # CLI (fetch / list / convert / columns)
+├── fetch.py           # Conexão FTP, listagem e download
+├── reader.py          # Leitura e tipagem dos CSVs
+├── wrangling.py       # convert_rais, convert_caged, extract_columns_for_dataset
+├── storage.py         # Convenções de caminhos no destino
+├── constants.py       # Schemas de colunas, NA values, ragged files
+└── meta.py            # Metadados (caminhos no FTP, padrões de filename)
 ```
 
 ### Fluxo de dados
 
 ```
-FTP (PDET)
-    ↓
-download (.7z, .zip)
-    ↓
-extração (.csv)
-    ↓
-detecção automática (ano, dataset, encoding)
-    ↓
-leitura com Polars (com fallback para CSV ragged)
-    ↓
-conversão de tipos (INT, FLOAT, BOOL, CATEGORICAL)
-    ↓
-DataFrame pronto para análise
+FTP (ftp.mtps.gov.br)
+    ↓  fetch_*
+arquivos compactados (.7z, .zip)
+    ↓  convert_* (chama 7z para extrair)
+CSVs (latin-1 ou utf-8, separador detectado)
+    ↓  read_rais / read_caged
+DataFrame Polars com tipos corretos
+    ↓  write_parquet
+Parquet
 ```
 
 ---
 
-## 🔧 API de Funções Principais
+## 🔧 API pública
 
-### `fetch.connect()`
+Todas estas funções são importáveis diretamente de `pdet_data`:
 
-Conecta ao servidor FTP da PDET.
+| Função | Descrição |
+|---|---|
+| `connect()` | Conecta ao FTP da PDET (`ftp.mtps.gov.br`). |
+| `list_rais(ftp)` / `list_rais_docs(ftp)` | Lista arquivos RAIS / docs. |
+| `list_caged(ftp)` / `list_caged_docs(ftp)` | Lista CAGED clássico / docs. |
+| `list_caged_2020(ftp)` / `list_caged_2020_docs(ftp)` | Lista Novo CAGED / docs. |
+| `fetch_rais(ftp, dest_dir)` / `fetch_rais_docs(...)` | Baixa RAIS / docs. |
+| `fetch_caged(ftp, dest_dir)` / `fetch_caged_docs(...)` | Baixa CAGED clássico / docs. |
+| `fetch_caged_2020(ftp, dest_dir)` / `fetch_caged_2020_docs(...)` | Baixa Novo CAGED / docs. |
+| `convert_rais(data_dir, dest_dir)` | Descompacta e grava RAIS em Parquet. |
+| `convert_caged(data_dir, dest_dir)` | Descompacta e grava CAGED em Parquet. |
+| `extract_columns_for_dataset(...)` | Extrai os nomes de coluna de cada arquivo do dataset. |
 
-```python
-ftp = fetch.connect()
-```
+Funções de leitura de baixo nível em `pdet_data.reader`:
 
-### `fetch.fetch_rais(ftp, dest_dir)`
-
-Baixa todos os arquivos RAIS disponíveis.
-
-**Parâmetros**:
-
-- `ftp`: Conexão FTP
-- `dest_dir`: Diretório de destino
-
-### `fetch.fetch_caged(ftp, dest_dir)` 
-
-Baixa CAGED clássico (até dez/2019).
-
-### `fetch.fetch_caged_2020(ftp, dest_dir)`
-
-Baixa CAGED 2020+ (jan/2020 em diante).
-
-### `read_rais(filepath, year, dataset, **kwargs)`
-
-Lê arquivo RAIS e retorna DataFrame Polars.
-
-**Parâmetros**:
-
-- `filepath`: Path para arquivo CSV
-- `year`: Ano dos dados
-- `dataset`: `"vinculos"` ou `"estabelecimentos"`
-
-### `read_caged(filepath, **kwargs)`
-
-Lê CAGED clássico.
-
-### `read_caged_2020(filepath, **kwargs)`
-
-Lê CAGED 2020 (movimentações, fora do prazo ou exclusões).
+- `read_rais(filepath, year, dataset, **read_csv_args)` — `dataset` ∈ `{"vinculos", "estabelecimentos"}`
+- `read_caged(filepath, date, dataset, **read_csv_args)` — `dataset` ∈ `{"caged", "caged-ajustes", "caged-2020-mov", "caged-2020-for", "caged-2020-exc"}`
+- `write_parquet(df, filepath)`
+- `decompress(file_metadata)` — invoca o binário `7z` para extrair
 
 ---
 
@@ -320,9 +327,10 @@ Lê CAGED 2020 (movimentações, fora do prazo ou exclusões).
 
 ```python
 import polars as pl
+from pathlib import Path
 from pdet_data.reader import read_rais
 
-df = read_rais(Path("rais_2023.csv"), year=2023, dataset="vinculos")
+df = read_rais(Path("rais_2023_vinculos.csv"), year=2023, dataset="vinculos")
 
 top_setores = df.group_by("cnae_secao").agg(
     pl.col("id_vinculo").count().alias("empregos")
@@ -339,7 +347,7 @@ from pdet_data.reader import read_rais
 from pathlib import Path
 
 df = pl.concat([
-    read_rais(Path(f"rais_{y}.csv"), year=y, dataset="vinculos").with_columns(
+    read_rais(Path(f"rais_{y}_vinculos.csv"), year=y, dataset="vinculos").with_columns(
         ano=pl.lit(y)
     )
     for y in range(2019, 2024)
@@ -353,18 +361,20 @@ evolucao = df.group_by("ano").agg(
 print(evolucao.sort("ano"))
 ```
 
-### 3. Desempenho de mercado em tempo real (CAGED 2020)
+### 3. Desempenho de mercado em tempo real (Novo CAGED)
 
 ```python
 import polars as pl
-from pdet_data.reader import read_caged_2020
 from pathlib import Path
-from datetime import datetime
+from pdet_data.reader import read_caged
 
-# Ler últimos 12 meses
-arquivos = sorted(Path("dados").glob("caged_mov_*.csv"))[-12:]
+# Ler últimos 12 meses (movimentações no prazo)
+arquivos = sorted(Path("dados").glob("cagedmov_*.csv"))[-12:]
 
-df = pl.concat([read_caged_2020(f) for f in arquivos])
+df = pl.concat([
+    read_caged(f, date=int(f.stem.split("_")[-1]), dataset="caged-2020-mov")
+    for f in arquivos
+])
 
 saldo_mensal = df.with_columns(
     saldo=(pl.col("admissoes") - pl.col("demissoes"))
@@ -381,7 +391,7 @@ print(saldo_mensal)
 import polars as pl
 from pdet_data.reader import read_rais
 
-df = read_rais(Path("rais_2023.csv"), year=2023, dataset="vinculos")
+df = read_rais(Path("rais_2023_vinculos.csv"), year=2023, dataset="vinculos")
 
 diferenca = df.group_by(["cnae_secao", "ind_sexo_trabalhador"]).agg(
     salario_medio=pl.col("vl_remun_medio_nominal").mean(),
@@ -449,7 +459,7 @@ MIT
 
 ## 👤 Autor
 
-Daniel Komesu ([github](https://github.com/dankkom))
+Komesu, D.K. ([github](https://github.com/dankkom))
 
 ---
 

@@ -30,7 +30,7 @@ classifiers = [
 ]
 dependencies = [
     "polars>=1.39",
-    "quantilica-core",
+    "quantilica-core @ git+https://github.com/Quantilica/quantilica-core.git",
     "tqdm>=4.67",
 ]
 
@@ -53,8 +53,8 @@ dev = [
 line-length = 79
 lint.select = ["E", "F", "I", "UP", "B"]
 
-[tool.uv.sources]
-quantilica-core = { path = "../quantilica-core", editable = true }
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [build-system]
 requires = ["hatchling"]

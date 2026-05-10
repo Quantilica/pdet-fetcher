@@ -1,4 +1,6 @@
-# 📊 pdet-fetcher
+# pdet-fetcher: Microdados de emprego e trabalho da PDET
+
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square) ![Python](https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square)
 
 > Ferramenta para coletar, processar e analisar microdados de emprego e trabalho do Brasil diretamente da **PDET** (Plataforma de Disseminação de Estatísticas do Trabalho).
 
@@ -6,18 +8,18 @@ Acesse dados do **RAIS** e **CAGED** de forma programática, com conversão auto
 
 ---
 
-## ⚡ O que é a PDET?
+## O que é a PDET?
 
 A **PDET** é a plataforma oficial do Ministério do Trabalho e Previdência Social (MTPS) que disponibiliza os microdados de trabalho do Brasil. Ela mantém as bases:
 
-- 📋 **RAIS** (Relação Anual de Informações Sociais): Dados de todos os vínculos de emprego formal registrados anualmente
-- 💼 **CAGED** (Cadastro Geral de Empregados e Desempregados): Movimentações mensais de emprego (admissões, demissões, etc.)
+- **RAIS** (Relação Anual de Informações Sociais): Dados de todos os vínculos de emprego formal registrados anualmente
+- **CAGED** (Cadastro Geral de Empregados e Desempregados): Movimentações mensais de emprego (admissões, demissões, etc.)
 
 Esses microdados são essenciais para análises de mercado de trabalho, pesquisa acadêmica e inteligência de negócios.
 
 ---
 
-## 🎯 Por que usar `pdet-fetcher`?
+## Por que usar `pdet-fetcher`?
 
 ### Desafios com os dados brutos
 
@@ -30,16 +32,16 @@ Os microdados da PDET vêm em formatos legados (7z, ZIP) com características es
 
 ### O que essa ferramenta oferece
 
-✅ **Acesso direto via FTP**: Conecta automaticamente ao servidor da PDET e baixa todos os arquivos  
-✅ **Leitura inteligente**: Detecta formato, codificação e estrutura automaticamente  
-✅ **Conversão de tipos**: Transforma strings em números, booleanos e categóricas  
-✅ **Correção de dados**: Fixa CSVs ragged, trata valores faltantes  
-✅ **Performance**: Usa [Polars](https://pola.rs/) para processamento rápido  
-✅ **Sem dependências pesadas**: Apenas `polars` e `tqdm`
+**Acesso direto via FTP**: Conecta automaticamente ao servidor da PDET e baixa todos os arquivos  
+**Leitura inteligente**: Detecta formato, codificação e estrutura automaticamente  
+**Conversão de tipos**: Transforma strings em números, booleanos e categóricas  
+**Correção de dados**: Fixa CSVs ragged, trata valores faltantes  
+**Performance**: Usa [Polars](https://pola.rs/) para processamento rápido  
+**Sem dependências pesadas**: Apenas `polars` e `tqdm`
 
 ---
 
-## 📦 Instalação
+## Instalação
 
 ```bash
 pip install git+https://github.com/Quantilica/pdet-fetcher.git
@@ -49,7 +51,7 @@ pip install git+https://github.com/Quantilica/pdet-fetcher.git
 
 ---
 
-## 🛠️ CLI
+## CLI
 
 O pacote instala o comando `pdet-fetcher` (também acessível via `python -m pdet_fetcher`) com quatro subcomandos:
 
@@ -68,9 +70,9 @@ Subcommands:
 
 ---
 
-## 🚀 Uso Rápido
+## Uso Rápido
 
-### 1️⃣ Baixar todos os microdados
+### Baixar todos os microdados
 
 ```bash
 pdet-fetcher fetch ./dados
@@ -99,7 +101,7 @@ finally:
     ftp.close()
 ```
 
-### 2️⃣ Ler dados RAIS
+### Ler dados RAIS
 
 ```python
 from pathlib import Path
@@ -124,7 +126,7 @@ top_setores = df.group_by("cnae_setor").agg(
 print(top_setores)
 ```
 
-### 3️⃣ Ler dados CAGED (clássico ou 2020+)
+### Ler dados CAGED (clássico ou 2020+)
 
 `read_caged` lê todas as variantes através do parâmetro `dataset`
 (`caged`, `caged-ajustes`, `caged-2020-mov`, `caged-2020-for`, `caged-2020-exc`):
@@ -158,7 +160,7 @@ saldo = df_mov.with_columns(
 print(saldo)
 ```
 
-### 4️⃣ Processar em lote
+### Processar em lote
 
 ```python
 from pathlib import Path
@@ -189,7 +191,7 @@ print(evolucao)
 
 ---
 
-## 📚 Dados Disponíveis
+## Dados Disponíveis
 
 ### RAIS (Relação Anual de Informações Sociais)
 
@@ -260,7 +262,7 @@ print(evolucao)
 
 ---
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 ```
 src/pdet_fetcher/
@@ -290,7 +292,7 @@ Parquet
 
 ---
 
-## 🔧 API pública
+## API pública
 
 Todas estas funções são importáveis diretamente de `pdet_fetcher`:
 
@@ -316,7 +318,7 @@ Funções de leitura de baixo nível em `pdet_fetcher.reader`:
 
 ---
 
-## 📊 Exemplos de Análise
+## Exemplos de Análise
 
 ### 1. Qual setor criou mais empregos em 2023?
 
@@ -398,46 +400,19 @@ print(diferenca)
 
 ---
 
-## 🐛 Tratamento de Dados
+## Tratamento de Dados
 
 A ferramenta detecta e corrige automaticamente:
 
-- ✅ **Valores faltantes**: Diferentes representações (espaços, pontos, valores nulos)
-- ✅ **Formato de números**: Remove espaçamento e converte separadores decimais
-- ✅ **Problemas de encoding**: Suporta latin-1 e utf-8
-- ✅ **CSVs ragged**: Fixa linhas com número inconsistente de colunas
-- ✅ **Tipos de dados**: Converte strings em INT64, FLOAT64, BOOLEAN conforme necessário
+- **Valores faltantes**: Diferentes representações (espaços, pontos, valores nulos)
+- **Formato de números**: Remove espaçamento e converte separadores decimais
+- **Problemas de encoding**: Suporta latin-1 e utf-8
+- **CSVs ragged**: Fixa linhas com número inconsistente de colunas
+- **Tipos de dados**: Converte strings em INT64, FLOAT64, BOOLEAN conforme necessário
 
 ---
 
-## 📈 Performance
-
-Para arquivos RAIS completos (>10GB com múltiplos anos):
-
-| Operação | Tempo | Memória |
-|----------|-------|---------|
-| Download | ~5-15 min | - |
-| Leitura (1 arquivo) | ~10s | ~2GB |
-| Agregação simples | <1s | - |
-
-*Especificações: processador moderno, 16GB RAM*
-
----
-
-## 🤝 Contribuindo
-
-Encontrou um bug? Quer adicionar suporte para novos datasets? Abra uma [issue](https://github.com/Quantilica/pdet-fetcher/issues) ou envie um PR!
-
-**Áreas para contribuição**:
-
-- Suporte para novos datasets da PDET
-- Otimizações de performance
-- Documentação e exemplos de análise
-- Tratamento de casos extremos nos dados
-
----
-
-## 📖 Referências
+## Referências
 
 - **PDET**: [pdet.mte.gov.br](http://pdet.mte.gov.br/microdados-rais-e-caged)
 - **RAIS**: [Documentação Oficial](http://pdet.mte.gov.br/rais)
@@ -446,15 +421,18 @@ Encontrou um bug? Quer adicionar suporte para novos datasets? Abra uma [issue](h
 
 ---
 
-## 📝 Licença
+## Desenvolvimento
 
-MIT
+```bash
+git clone https://github.com/Quantilica/pdet-fetcher.git
+cd pdet-fetcher
+uv sync --dev
+uv run pytest
+```
 
----
+## Licença
 
-## 👤 Autor
-
-Komesu, D.K. ([github](https://github.com/dankkom))
+MIT — veja [LICENSE](LICENSE).
 
 ---
 

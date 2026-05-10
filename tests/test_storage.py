@@ -1,9 +1,9 @@
-"""Tests for pdet_data.storage — pure functions, no I/O."""
+"""Tests for pdet_fetcher.storage — pure functions, no I/O."""
 from datetime import datetime
 
 import pytest
 
-from pdet_data.storage import (
+from pdet_fetcher.storage import (
     get_caged_filename,
     get_caged_2020_filename,
     get_rais_filename,

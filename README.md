@@ -1,4 +1,4 @@
-# 📊 pdet-data
+# 📊 pdet-fetcher
 
 > Ferramenta para coletar, processar e analisar microdados de emprego e trabalho do Brasil diretamente da **PDET** (Plataforma de Disseminação de Estatísticas do Trabalho).
 
@@ -17,7 +17,7 @@ Esses microdados são essenciais para análises de mercado de trabalho, pesquisa
 
 ---
 
-## 🎯 Por que usar `pdet-data`?
+## 🎯 Por que usar `pdet-fetcher`?
 
 ### Desafios com os dados brutos
 
@@ -43,8 +43,8 @@ Os microdados da PDET vêm em formatos legados (7z, ZIP) com características es
 
 ```bash
 # Clone o repositório
-git clone https://github.com/dankkom/pdet-data.git
-cd pdet-data
+git clone https://github.com/Quantilica/pdet-fetcher.git
+cd pdet-fetcher
 
 # Instale em modo editável
 pip install -e .
@@ -56,10 +56,10 @@ pip install -e .
 
 ## 🛠️ CLI
 
-O pacote instala o comando `pdet-data` (também acessível via `python -m pdet_data`) com quatro subcomandos:
+O pacote instala o comando `pdet-fetcher` (também acessível via `python -m pdet_fetcher`) com quatro subcomandos:
 
 ```text
-pdet-data <subcommand> [args]
+pdet-fetcher <subcommand> [args]
 
 Subcommands:
   fetch    DEST_DIR              Baixa todo o RAIS e CAGED (dados + docs) para DEST_DIR
@@ -78,14 +78,14 @@ Subcommands:
 ### 1️⃣ Baixar todos os microdados
 
 ```bash
-pdet-data fetch ./dados
+pdet-fetcher fetch ./dados
 ```
 
 Equivalente em Python:
 
 ```python
 from pathlib import Path
-from pdet_data import (
+from pdet_fetcher import (
     connect,
     fetch_rais, fetch_rais_docs,
     fetch_caged, fetch_caged_docs,
@@ -109,7 +109,7 @@ finally:
 ```python
 from pathlib import Path
 import polars as pl
-from pdet_data.reader import read_rais
+from pdet_fetcher.reader import read_rais
 
 # Ler vínculos de emprego (ano 2023)
 df = read_rais(
@@ -137,7 +137,7 @@ print(top_setores)
 ```python
 from pathlib import Path
 import polars as pl
-from pdet_data.reader import read_caged
+from pdet_fetcher.reader import read_caged
 
 # CAGED clássico (até 2019)
 df_caged = read_caged(
@@ -167,7 +167,7 @@ print(saldo)
 
 ```python
 from pathlib import Path
-from pdet_data.reader import read_rais
+from pdet_fetcher.reader import read_rais
 import polars as pl
 
 # Ler múltiplos anos de RAIS
@@ -268,7 +268,7 @@ print(evolucao)
 ## 🏗️ Arquitetura
 
 ```
-src/pdet_data/
+src/pdet_fetcher/
 ├── __init__.py        # Re-exports da API pública
 ├── __main__.py        # CLI (fetch / list / convert / columns)
 ├── fetch.py           # Conexão FTP, listagem e download
@@ -297,7 +297,7 @@ Parquet
 
 ## 🔧 API pública
 
-Todas estas funções são importáveis diretamente de `pdet_data`:
+Todas estas funções são importáveis diretamente de `pdet_fetcher`:
 
 | Função | Descrição |
 |---|---|
@@ -312,7 +312,7 @@ Todas estas funções são importáveis diretamente de `pdet_data`:
 | `convert_caged(data_dir, dest_dir)` | Descompacta e grava CAGED em Parquet. |
 | `extract_columns_for_dataset(...)` | Extrai os nomes de coluna de cada arquivo do dataset. |
 
-Funções de leitura de baixo nível em `pdet_data.reader`:
+Funções de leitura de baixo nível em `pdet_fetcher.reader`:
 
 - `read_rais(filepath, year, dataset, **read_csv_args)` — `dataset` ∈ `{"vinculos", "estabelecimentos"}`
 - `read_caged(filepath, date, dataset, **read_csv_args)` — `dataset` ∈ `{"caged", "caged-ajustes", "caged-2020-mov", "caged-2020-for", "caged-2020-exc"}`
@@ -328,7 +328,7 @@ Funções de leitura de baixo nível em `pdet_data.reader`:
 ```python
 import polars as pl
 from pathlib import Path
-from pdet_data.reader import read_rais
+from pdet_fetcher.reader import read_rais
 
 df = read_rais(Path("rais_2023_vinculos.csv"), year=2023, dataset="vinculos")
 
@@ -343,7 +343,7 @@ print(top_setores)
 
 ```python
 import polars as pl
-from pdet_data.reader import read_rais
+from pdet_fetcher.reader import read_rais
 from pathlib import Path
 
 df = pl.concat([
@@ -366,7 +366,7 @@ print(evolucao.sort("ano"))
 ```python
 import polars as pl
 from pathlib import Path
-from pdet_data.reader import read_caged
+from pdet_fetcher.reader import read_caged
 
 # Ler últimos 12 meses (movimentações no prazo)
 arquivos = sorted(Path("dados").glob("cagedmov_*.csv"))[-12:]
@@ -389,7 +389,7 @@ print(saldo_mensal)
 
 ```python
 import polars as pl
-from pdet_data.reader import read_rais
+from pdet_fetcher.reader import read_rais
 
 df = read_rais(Path("rais_2023_vinculos.csv"), year=2023, dataset="vinculos")
 
@@ -431,7 +431,7 @@ Para arquivos RAIS completos (>10GB com múltiplos anos):
 
 ## 🤝 Contribuindo
 
-Encontrou um bug? Quer adicionar suporte para novos datasets? Abra uma [issue](https://github.com/dankkom/pdet-data/issues) ou envie um PR!
+Encontrou um bug? Quer adicionar suporte para novos datasets? Abra uma [issue](https://github.com/Quantilica/pdet-fetcher/issues) ou envie um PR!
 
 **Áreas para contribuição**:
 

@@ -1,6 +1,6 @@
 
 import pytest
-from pdet_data.fetch import _get_date_dirs
+from pdet_fetcher.fetch import _get_date_dirs
 
 def test_get_date_dirs_single_pattern():
     fi = [

@@ -1,12 +1,12 @@
-"""Tests for pdet_data.reader — column schema resolution and decompress error handling."""
+"""Tests for pdet_fetcher.reader — column schema resolution and decompress error handling."""
 import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from pdet_data.reader import decompress, read_caged, read_rais
-from pdet_data.constants import (
+from pdet_fetcher.reader import decompress, read_caged, read_rais
+from pdet_fetcher.constants import (
     CAGED_COLUMNS,
     CAGED_AJUSTES_COLUMNS,
     CAGED_2020_MOV_COLUMNS,
@@ -31,8 +31,8 @@ class TestDecompress:
         result = MagicMock()
         result.returncode = 1
         result.stderr = b"Error: file not found"
-        with patch("pdet_data.reader.subprocess.run", return_value=result):
-            with patch("pdet_data.reader.tempfile.mkdtemp", return_value=str(tmp_path)):
+        with patch("pdet_fetcher.reader.subprocess.run", return_value=result):
+            with patch("pdet_fetcher.reader.tempfile.mkdtemp", return_value=str(tmp_path)):
                 with pytest.raises(RuntimeError, match="7z failed"):
                     decompress(meta)
 
@@ -42,8 +42,8 @@ class TestDecompress:
         result.returncode = 0
         empty_dir = tmp_path / "empty"
         empty_dir.mkdir()
-        with patch("pdet_data.reader.subprocess.run", return_value=result):
-            with patch("pdet_data.reader.tempfile.mkdtemp", return_value=str(empty_dir)):
+        with patch("pdet_fetcher.reader.subprocess.run", return_value=result):
+            with patch("pdet_fetcher.reader.tempfile.mkdtemp", return_value=str(empty_dir)):
                 with pytest.raises(RuntimeError, match="no files"):
                     decompress(meta)
 
@@ -55,8 +55,8 @@ class TestDecompress:
         out_dir.mkdir()
         extracted = out_dir / "data.csv"
         extracted.write_text("a;b\n1;2\n")
-        with patch("pdet_data.reader.subprocess.run", return_value=result):
-            with patch("pdet_data.reader.tempfile.mkdtemp", return_value=str(out_dir)):
+        with patch("pdet_fetcher.reader.subprocess.run", return_value=result):
+            with patch("pdet_fetcher.reader.tempfile.mkdtemp", return_value=str(out_dir)):
                 output = decompress(meta)
         assert output["decompressed_filepath"] == extracted
         assert output["tmp_dir"] == out_dir

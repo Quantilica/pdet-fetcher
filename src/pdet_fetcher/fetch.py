@@ -182,7 +182,7 @@ def _fetch_loop(
                 dest_filepath,
                 source_id="pdet",
                 dataset_id=file.get("dataset", "unknown"),
-                producer="pdet-data",
+                producer="pdet-fetcher",
             )
             
             metadata = file | {"filepath": downloaded_path}

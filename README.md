@@ -42,12 +42,7 @@ Os microdados da PDET vêm em formatos legados (7z, ZIP) com características es
 ## 📦 Instalação
 
 ```bash
-# Clone o repositório
-git clone https://github.com/Quantilica/pdet-fetcher.git
-cd pdet-fetcher
-
-# Instale em modo editável
-pip install -e .
+pip install git+https://github.com/Quantilica/pdet-fetcher.git
 ```
 
 **Requisitos**: Python 3.10+ e `7z` no PATH (usado por `convert_*` para extrair os arquivos baixados).

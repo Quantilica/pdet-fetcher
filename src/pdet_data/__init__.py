@@ -1,4 +1,9 @@
+from quantilica_core.logging import get_logger
+
 __version__ = "0.1.1"
+
+logger = get_logger(__name__)
+
 
 from .fetch import (
     connect,

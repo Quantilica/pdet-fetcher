@@ -1,33 +1,34 @@
 import datetime as dt
 import ftplib
-import logging
 import re
 from pathlib import Path
 from typing import Any, Callable, Generator, Sequence
 
-from tqdm import tqdm
+from quantilica_core.ftp import FtpClient
+import quantilica_core.metadata as core_meta
 
+from . import logger
 from .meta import datasets, docs
-from .storage import (
-    get_caged_2020_filepath,
-    get_caged_filepath,
-    get_docs_filepath,
-    get_rais_filepath,
-)
+from .storage import DataRepository
+
 
 FTP_HOST = "ftp.mtps.gov.br"
-logger = logging.getLogger(__name__)
+
 _list_files_cache: dict[str, list[dict]] = {}
+
+# Global client for PDET
+client = FtpClient(FTP_HOST)
 
 
 def connect() -> ftplib.FTP:
+    """Connect to the PDET FTP server for compatibility."""
     ftp = ftplib.FTP(FTP_HOST, encoding="latin-1")
     ftp.login()
     return ftp
 
 
 def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
-    """List all files in the current directory."""
+    """List all files in the current directory using custom parser for MTPS server."""
     if directory in _list_files_cache:
         return _list_files_cache[directory]
 
@@ -66,7 +67,7 @@ def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
                 "size": size,
                 "name": name,
                 "extension": extension,
-                "full_path": f"{directory}/{name}",
+                "full_path": f"{directory}/{name}".replace("//", "/"),
             }
             return file
         else:
@@ -79,35 +80,6 @@ def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
             files.append(file)
     _list_files_cache[directory] = files
     return files
-
-
-def fetch_file(ftp: ftplib.FTP, ftp_filepath: str, dest_filepath: Path, **kwargs):
-    """Download a file from FTP."""
-    dest_filepath.parent.mkdir(parents=True, exist_ok=True)
-
-    if "file_size" in kwargs:
-        file_size = kwargs["file_size"]
-    else:
-        file_size = ftp.size(ftp_filepath)
-
-    logger.info("Fetching %s --> %s", ftp_filepath, dest_filepath)
-
-    progress = tqdm(
-        desc=dest_filepath.name,
-        total=file_size,
-        unit="B",
-        unit_scale=True,
-    )
-
-    with open(dest_filepath, "wb") as f:
-
-        def write(data):
-            nonlocal f, progress
-            f.write(data)
-            progress.update(len(data))
-
-        ftp.retrbinary(f"RETR {ftp_filepath}", write)
-    progress.close()
 
 
 def _get_date_dirs(
@@ -198,17 +170,26 @@ def _fetch_loop(
     dest_dir: Path,
 ) -> list[dict[str, Any]]:
     metadata_list = []
+    # We use the global client which wraps FtpClient from quantilica-core
     for file in list_fn(ftp):
         ftp_filepath = file["full_path"]
         dest_filepath = get_filepath_fn(file, dest_dir)
-        if dest_filepath.exists() and dest_filepath.stat().st_size == file["size"]:
-            logger.info("%s already fetched", ftp_filepath)
-            continue
-        file_size = file["size"]
-        logger.info("Fetching %s --> %s", ftp_filepath, dest_filepath)
-        fetch_file(ftp, ftp_filepath, dest_filepath, file_size=file_size)
-        metadata = file | {"filepath": dest_filepath}
-        metadata_list.append(metadata)
+        
+        # We use FtpClient.download_with_manifest to handle freshness, atomic write and manifest
+        try:
+            downloaded_path = client.download_with_manifest(
+                ftp_filepath,
+                dest_filepath,
+                source_id="pdet",
+                dataset_id=file.get("dataset", "unknown"),
+                producer="pdet-data",
+            )
+            
+            metadata = file | {"filepath": downloaded_path}
+            metadata_list.append(metadata)
+        except Exception as e:
+            logger.error(f"Failed to download {ftp_filepath}: {e}")
+            
     return metadata_list
 
 
@@ -232,10 +213,12 @@ def list_caged_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
 
 
 def fetch_caged(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+    from .storage import get_caged_filepath
     return _fetch_loop(ftp, list_caged, get_caged_filepath, dest_dir)
 
 
 def fetch_caged_docs(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+    from .storage import get_docs_filepath
     return _fetch_loop(ftp, list_caged_docs, get_docs_filepath, dest_dir)
 
 
@@ -252,10 +235,12 @@ def list_caged_2020_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
 
 
 def fetch_caged_2020(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+    from .storage import get_caged_2020_filepath
     return _fetch_loop(ftp, list_caged_2020, get_caged_2020_filepath, dest_dir)
 
 
 def fetch_caged_2020_docs(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+    from .storage import get_docs_filepath
     return _fetch_loop(ftp, list_caged_2020_docs, get_docs_filepath, dest_dir)
 
 
@@ -275,8 +260,58 @@ def list_rais_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
 
 
 def fetch_rais(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+    from .storage import get_rais_filepath
     return _fetch_loop(ftp, list_rais, get_rais_filepath, dest_dir)
 
 
 def fetch_rais_docs(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+    from .storage import get_docs_filepath
     return _fetch_loop(ftp, list_rais_docs, get_docs_filepath, dest_dir)
+
+
+def generate_catalog(downloaded_files: list[dict]) -> core_meta.MetadataCatalog:
+    """Generate a validated MetadataCatalog from a list of downloaded PDET files."""
+    source_id = "pdet"
+    source = core_meta.Source(
+        id=source_id,
+        name="PDET - Programa de Disseminação de Estatísticas do Trabalho",
+        homepage_url="http://pdet.mte.gov.br",
+    )
+
+    datasets_map = {}
+    resources = []
+    
+    for file in downloaded_files:
+        dataset_id = file.get("dataset", "unknown")
+        if dataset_id not in datasets_map:
+            datasets_map[dataset_id] = core_meta.Dataset(
+                id=dataset_id,
+                source_id=source_id,
+                name=dataset_id.upper().replace("-", " "),
+            )
+            
+        filename = file["filepath"].name
+        resource_id = filename.replace(".", "_")
+        
+        resources.append(
+            core_meta.Resource(
+                id=resource_id,
+                dataset_id=dataset_id,
+                name=filename,
+                url=file["full_path"], # FTP path
+                format=file.get("extension", ""),
+                path=str(file["filepath"].absolute()),
+                metadata={
+                    "remote_datetime": file["datetime"].isoformat(),
+                    "size": file["size"],
+                }
+            )
+        )
+        
+    catalog = core_meta.MetadataCatalog(
+        sources=[source],
+        datasets=list(datasets_map.values()),
+        resources=resources,
+    )
+    catalog.validate_references()
+    return catalog

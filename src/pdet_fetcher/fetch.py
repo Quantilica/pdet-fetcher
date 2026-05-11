@@ -27,6 +27,9 @@ def connect() -> ftplib.FTP:
     return ftp
 
 
+_FTP_ERRORS = ftplib.all_errors + (AttributeError,)  # AttributeError: ftp.sock is None after silent drop
+
+
 def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
     """List all files in the current directory using custom parser for MTPS server."""
     if directory in _list_files_cache:
@@ -34,9 +37,23 @@ def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
 
     logger.info("Listing %s", directory)
 
+    active = ftp
     ftp_lines = []
-    ftp.cwd(directory)
-    ftp.retrlines("LIST", ftp_lines.append)
+    for attempt in range(3):
+        try:
+            ftp_lines = []
+            active.cwd(directory)
+            active.retrlines("LIST", ftp_lines.append)
+            break
+        except _FTP_ERRORS as exc:
+            if attempt >= 2:
+                raise
+            logger.warning("FTP error on attempt %d listing %s: %s. Reconnecting...", attempt + 1, directory, exc)
+            try:
+                active.close()
+            except Exception:
+                pass
+            active = connect()
 
     # parse files' date, size and name
     def parse_line(line):

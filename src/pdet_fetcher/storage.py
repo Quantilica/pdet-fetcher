@@ -7,6 +7,10 @@ class DataRepository(BaseDataRepository):
     def __init__(self, root: Path | str):
         super().__init__(root)
 
+    def raw_path(self, dataset_id: str, *subkeys: str) -> Path:
+        key = "/".join([dataset_id, *subkeys])
+        return self.storage.path_for(key)
+
     def get_docs_filepath(self, file_metadata: dict) -> Path:
         dataset = file_metadata["dataset"]
         filename = get_docs_filename(file_metadata)

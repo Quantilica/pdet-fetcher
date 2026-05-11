@@ -1,5 +1,5 @@
 from pathlib import Path
-from quantilica_core.storage import BaseDataRepository
+from quantilica_core.storage import BaseDataRepository, stamp_filename
 
 class DataRepository(BaseDataRepository):
     """Manages local storage for PDET files using BaseDataRepository."""
@@ -32,16 +32,10 @@ class DataRepository(BaseDataRepository):
 
 
 def get_docs_filename(file_metadata: dict) -> str:
-    # file name
     name, _ = file_metadata["name"].rsplit(".", maxsplit=1)
-
-    # modified part
     modified = file_metadata["datetime"]
-
-    # extension part
     extension = file_metadata["extension"]
-
-    return f"{name}@{modified:%Y%m%d}.{extension}"
+    return stamp_filename(name, extension, modified)
 
 
 def get_docs_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -52,22 +46,14 @@ def get_docs_filepath(file_metadata: dict, dest_dir: Path) -> Path:
 # ---------------------------------- CAGED ------------------------------------
 # -----------------------------------------------------------------------------
 def get_caged_filename(file_metadata: dict) -> str:
-    # dataset part
     dataset = file_metadata["dataset"]
-
-    # partition part
     year = file_metadata["year"]
     partition = f"{year:04}"
     if month := file_metadata.get("month"):
         partition = partition + f"{month:02}"
-
-    # modified part
     modified = file_metadata["datetime"]
-
-    # extension part
     extension = file_metadata["extension"]
-
-    return f"{dataset}_{partition}@{modified:%Y%m%d}.{extension}"
+    return stamp_filename(f"{dataset}_{partition}", extension, modified)
 
 
 def get_caged_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -79,21 +65,13 @@ def get_caged_docs_filepath(file_metadata: dict, dest_dir: Path) -> Path:
 
 
 def get_caged_2020_filename(file_metadata: dict) -> str:
-    # dataset part
     dataset = file_metadata["dataset"]
-
-    # partition part
     year = file_metadata["year"]
     month = file_metadata["month"]
     partition = f"{year:04}{month:02}"
-
-    # modified part
     modified = file_metadata["datetime"]
-
-    # extension part
     extension = file_metadata["extension"]
-
-    return f"{dataset}_{partition}@{modified:%Y%m%d}.{extension}"
+    return stamp_filename(f"{dataset}_{partition}", extension, modified)
 
 
 def get_caged_2020_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -108,22 +86,14 @@ def get_caged_2020_docs_filepath(file_metadata: dict, dest_dir: Path) -> Path:
 # ----------------------------------- RAIS ------------------------------------
 # -----------------------------------------------------------------------------
 def get_rais_filename(file_metadata: dict) -> str:
-    # dataset part
     dataset = file_metadata["dataset"]
-
-    # partition part
     year = file_metadata["year"]
     partition = f"{year}"
     if region := file_metadata.get("uf", file_metadata.get("region")):
         partition = partition + f"-{region}"
-
-    # modified part
     modified = file_metadata["datetime"]
-
-    # extension part
     extension = file_metadata["extension"]
-
-    return f"{dataset}_{partition}@{modified:%Y%m%d}.{extension}"
+    return stamp_filename(f"{dataset}_{partition}", extension, modified)
 
 
 def get_rais_filepath(file_metadata: dict, dest_dir: Path) -> Path:

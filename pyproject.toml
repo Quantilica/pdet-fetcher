@@ -42,6 +42,9 @@ Issues = "https://github.com/Quantilica/pdet-fetcher/issues"
 [project.scripts]
 pdet-fetcher = "pdet_fetcher.__main__:main"
 
+[project.entry-points."quantilica.fetchers"]
+pdet = "pdet_fetcher.plugin:app"
+
 [project.optional-dependencies]
 dev = [
     "ruff>=0.9.0",

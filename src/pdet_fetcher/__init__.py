@@ -1,6 +1,11 @@
+from importlib.metadata import PackageNotFoundError, version
+
 from quantilica_core.logging import get_logger
 
-__version__ = "0.1.1"
+try:
+    __version__ = version("pdet-fetcher")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 logger = get_logger(__name__)
 

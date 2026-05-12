@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 from . import (
+    __version__,
     connect,
     fetch_caged,
     fetch_caged_2020,
@@ -114,6 +115,11 @@ def columns_cmd(args):
 def main():
     parser = argparse.ArgumentParser(
         description="Fetch and list Brazilian labor market microdata from PDET"
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 

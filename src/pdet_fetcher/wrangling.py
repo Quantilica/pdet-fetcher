@@ -26,7 +26,11 @@ def convert_rais(data_dir: Path, dest_dir: Path) -> None:
             for file in year_dir.iterdir():
                 file_metadata = reader.parse_filename(file)
                 uf = file_metadata["uf"]
-                if uf not in all_files or file_metadata["modification"] > all_files[uf]["modification"]:
+                if (
+                    uf not in all_files
+                    or file_metadata["modification"]
+                    > all_files[uf]["modification"]
+                ):
                     all_files[uf] = file_metadata
 
             if not all_files:
@@ -35,19 +39,28 @@ def convert_rais(data_dir: Path, dest_dir: Path) -> None:
             files = list(all_files.values())
             latest_modification = max(f["modification"] for f in files)
 
-            dest_filepath = out_dir / f"{dataset_name}_{year}@{latest_modification}.parquet"
+            dest_filepath = (
+                out_dir
+                / f"{dataset_name}_{year}@{latest_modification}.parquet"
+            )
             if dest_filepath.exists():
-                logger.info("Skipping %s (already converted)", dest_filepath.name)
+                logger.info(
+                    "Skipping %s (already converted)", dest_filepath.name
+                )
                 continue
 
-            logger.info("Converting %d files to %s", len(files), dest_filepath.name)
+            logger.info(
+                "Converting %d files to %s", len(files), dest_filepath.name
+            )
             dest_filepath.parent.mkdir(parents=True, exist_ok=True)
 
             with pl.StringCache():
                 frames = []
                 for file_metadata in files:
                     decompressed = reader.decompress(file_metadata)
-                    decompressed_filepath = decompressed["decompressed_filepath"]
+                    decompressed_filepath = decompressed[
+                        "decompressed_filepath"
+                    ]
                     df = reader.read_rais(
                         decompressed_filepath,
                         year=year,
@@ -68,8 +81,16 @@ def convert_caged(data_dir: Path, dest_dir: Path) -> None:
         if file.suffix not in (".zip", ".7z"):
             continue
         file_metadata = reader.parse_filename(file)
-        key = (file_metadata["dataset"], file_metadata["date"], file_metadata["uf"])
-        if key not in latest_files or file_metadata["modification"] > latest_files[key]["modification"]:
+        key = (
+            file_metadata["dataset"],
+            file_metadata["date"],
+            file_metadata["uf"],
+        )
+        if (
+            key not in latest_files
+            or file_metadata["modification"]
+            > latest_files[key]["modification"]
+        ):
             latest_files[key] = file_metadata
 
     logger.info("Converting %d CAGED files", len(latest_files))
@@ -105,7 +126,11 @@ def convert_caged(data_dir: Path, dest_dir: Path) -> None:
 
 
 def extract_columns_for_dataset(
-    data_dir: Path, glob_pattern: str, output_file: Path, encoding: str = "latin-1", has_uf: bool = False
+    data_dir: Path,
+    glob_pattern: str,
+    output_file: Path,
+    encoding: str = "latin-1",
+    has_uf: bool = False,
 ) -> None:
     fieldnames = ["column", "order", "name", "date"]
     if has_uf:

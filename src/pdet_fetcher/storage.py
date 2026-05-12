@@ -1,5 +1,7 @@
 from pathlib import Path
+
 from quantilica_core.storage import BaseDataRepository, stamp_filename
+
 
 class DataRepository(BaseDataRepository):
     """Manages local storage for PDET files using BaseDataRepository."""

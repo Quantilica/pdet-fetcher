@@ -12,31 +12,36 @@ from . import (
     fetch_rais_docs,
     list_caged,
     list_caged_2020,
-    list_caged_2020_docs,
-    list_caged_docs,
     list_rais,
-    list_rais_docs,
 )
 from .wrangling import convert_caged, convert_rais, extract_columns_for_dataset
 
-logging.basicConfig(level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s"
+)
 
 
 def list_files_cmd(args):
     ftp = connect()
     try:
         for f in list_caged(ftp):
-            dest_filepath = args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+            dest_filepath = (
+                args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+            )
             if dest_filepath.exists():
                 continue
             print(f["full_path"], "-->", dest_filepath)
         for f in list_rais(ftp):
-            dest_filepath = args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+            dest_filepath = (
+                args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+            )
             if dest_filepath.exists():
                 continue
             print(f["full_path"], "-->", dest_filepath)
         for f in list_caged_2020(ftp):
-            dest_filepath = args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+            dest_filepath = (
+                args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+            )
             if dest_filepath.exists():
                 continue
             print(f["full_path"], "-->", dest_filepath)
@@ -112,7 +117,9 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
-    fetch_parser = subparsers.add_parser("fetch", help="Fetch data from FTP server")
+    fetch_parser = subparsers.add_parser(
+        "fetch", help="Fetch data from FTP server"
+    )
     fetch_parser.add_argument(
         "dest_dir",
         type=Path,
@@ -120,7 +127,9 @@ def main():
     )
     fetch_parser.set_defaults(func=fetch_cmd)
 
-    list_parser = subparsers.add_parser("list", help="List available files on FTP server")
+    list_parser = subparsers.add_parser(
+        "list", help="List available files on FTP server"
+    )
     list_parser.add_argument(
         "dest_dir",
         type=Path,
@@ -128,7 +137,9 @@ def main():
     )
     list_parser.set_defaults(func=list_files_cmd)
 
-    convert_parser = subparsers.add_parser("convert", help="Convert raw data files to Parquet")
+    convert_parser = subparsers.add_parser(
+        "convert", help="Convert raw data files to Parquet"
+    )
     convert_parser.add_argument(
         "data_dir",
         type=Path,
@@ -141,7 +152,9 @@ def main():
     )
     convert_parser.set_defaults(func=convert_cmd)
 
-    columns_parser = subparsers.add_parser("columns", help="Extract column names from raw data files")
+    columns_parser = subparsers.add_parser(
+        "columns", help="Extract column names from raw data files"
+    )
     columns_parser.add_argument(
         "data_dir",
         type=Path,

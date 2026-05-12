@@ -992,7 +992,7 @@ RAIS_ESTABELECIMENTOS_COLUMNS = {
         "id_uf",
         "subsetor_ibge",
         "cep",
-    )
+    ),
 }
 
 CAGED_COLUMNS = {
@@ -1432,6 +1432,4 @@ NA_VALUES = (
     "n/d",
 )
 
-RAGGED_CSV_FILES = (
-    "CAGED_062012.txt",
-)
+RAGGED_CSV_FILES = ("CAGED_062012.txt",)

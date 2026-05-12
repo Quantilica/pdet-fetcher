@@ -1,28 +1,41 @@
 """Tests for pdet_fetcher.storage — pure functions, no I/O."""
+
 from datetime import datetime
 
-import pytest
-
 from pdet_fetcher.storage import (
-    get_caged_filename,
     get_caged_2020_filename,
+    get_caged_filename,
     get_rais_filename,
 )
-
 
 MOCK_DATETIME = datetime(2024, 3, 15)
 
 
 def _caged_meta(**kwargs):
-    return {"dataset": "caged", "datetime": MOCK_DATETIME, "extension": "parquet", **kwargs}
+    return {
+        "dataset": "caged",
+        "datetime": MOCK_DATETIME,
+        "extension": "parquet",
+        **kwargs,
+    }
 
 
 def _caged_2020_meta(**kwargs):
-    return {"dataset": "caged-2020-mov", "datetime": MOCK_DATETIME, "extension": "parquet", **kwargs}
+    return {
+        "dataset": "caged-2020-mov",
+        "datetime": MOCK_DATETIME,
+        "extension": "parquet",
+        **kwargs,
+    }
 
 
 def _rais_meta(**kwargs):
-    return {"dataset": "rais-vinculos", "datetime": MOCK_DATETIME, "extension": "parquet", **kwargs}
+    return {
+        "dataset": "rais-vinculos",
+        "datetime": MOCK_DATETIME,
+        "extension": "parquet",
+        **kwargs,
+    }
 
 
 class TestGetCagedFilename:

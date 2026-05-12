@@ -66,7 +66,9 @@ def convert_columns_dtypes(df: pl.DataFrame) -> pl.DataFrame:
         elif column in BOOLEAN_COLUMNS:
             df = df.with_columns(pl.col(column).cast(pl.Int8).cast(pl.Boolean))
         else:  # Categorical
-            df = df.with_columns(pl.col(column).str.strip_chars().cast(pl.Categorical))
+            df = df.with_columns(
+                pl.col(column).str.strip_chars().cast(pl.Categorical)
+            )
     return df
 
 
@@ -76,12 +78,14 @@ def _fix_ragged_csv(filepath: Path, encoding: str) -> Path:
     logger.info("Fixing ragged CSV file: %s", filepath)
 
     dest_filepath = filepath.with_suffix(".fixed.csv")
-    with open(filepath, "r", encoding=encoding) as f:
+    with open(filepath, encoding=encoding) as f:
         reader = csv.reader(f, delimiter=";")
         header = next(reader)
         header_len = len(header)
         with open(dest_filepath, "w", encoding=encoding, newline="\n") as ff:
-            writer = csv.writer(ff, delimiter=";", quotechar='"', quoting=csv.QUOTE_ALL)
+            writer = csv.writer(
+                ff, delimiter=";", quotechar='"', quoting=csv.QUOTE_ALL
+            )
             writer.writerow(header)
             for row in reader:
                 writer.writerow(row[:header_len])
@@ -90,7 +94,7 @@ def _fix_ragged_csv(filepath: Path, encoding: str) -> Path:
 
 
 def _sniff_separator(filepath: Path, encoding: str) -> str:
-    with open(filepath, "r", encoding=encoding, errors="replace") as f:
+    with open(filepath, encoding=encoding, errors="replace") as f:
         first_line = f.readline()
     counts = {sep: first_line.count(sep) for sep in (";", "\t", ",")}
     return max(counts, key=counts.__getitem__)
@@ -105,7 +109,9 @@ def _resolve_columns(schema_dict: dict[int, tuple], date_key: int) -> tuple:
     return columns_names
 
 
-def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.DataFrame:
+def read_rais(
+    filepath: Path, year: int, dataset: str, **read_csv_args
+) -> pl.DataFrame:
     if dataset == "vinculos":
         columns_names = _resolve_columns(RAIS_VINCULOS_COLUMNS, year)
     elif dataset == "estabelecimentos":
@@ -195,9 +201,7 @@ def decompress(file_metadata: dict[str, Any]) -> dict[str, Path]:
         )
     extracted = list(tmp_dir.iterdir())
     if not extracted:
-        raise RuntimeError(
-            f"7z produced no files from {compressed_filepath}"
-        )
+        raise RuntimeError(f"7z produced no files from {compressed_filepath}")
     decompressed_filepath = extracted[0]
     return file_metadata | {
         "tmp_dir": tmp_dir,

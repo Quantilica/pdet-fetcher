@@ -26,21 +26,21 @@ def list_files_cmd(args):
     try:
         for f in list_caged(ftp):
             dest_filepath = (
-                args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+                args.output / f["dataset"] / str(f["year"]) / f["name"]
             )
             if dest_filepath.exists():
                 continue
             print(f["full_path"], "-->", dest_filepath)
         for f in list_rais(ftp):
             dest_filepath = (
-                args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+                args.output / f["dataset"] / str(f["year"]) / f["name"]
             )
             if dest_filepath.exists():
                 continue
             print(f["full_path"], "-->", dest_filepath)
         for f in list_caged_2020(ftp):
             dest_filepath = (
-                args.dest_dir / f["dataset"] / str(f["year"]) / f["name"]
+                args.output / f["dataset"] / str(f["year"]) / f["name"]
             )
             if dest_filepath.exists():
                 continue
@@ -52,19 +52,19 @@ def list_files_cmd(args):
 def fetch_cmd(args):
     ftp = connect()
     try:
-        fetch_rais(ftp=ftp, dest_dir=args.dest_dir)
-        fetch_rais_docs(ftp=ftp, dest_dir=args.dest_dir)
-        fetch_caged(ftp=ftp, dest_dir=args.dest_dir)
-        fetch_caged_docs(ftp=ftp, dest_dir=args.dest_dir)
-        fetch_caged_2020(ftp=ftp, dest_dir=args.dest_dir)
-        fetch_caged_2020_docs(ftp=ftp, dest_dir=args.dest_dir)
+        fetch_rais(ftp=ftp, dest_dir=args.output)
+        fetch_rais_docs(ftp=ftp, dest_dir=args.output)
+        fetch_caged(ftp=ftp, dest_dir=args.output)
+        fetch_caged_docs(ftp=ftp, dest_dir=args.output)
+        fetch_caged_2020(ftp=ftp, dest_dir=args.output)
+        fetch_caged_2020_docs(ftp=ftp, dest_dir=args.output)
     finally:
         ftp.close()
 
 
 def convert_cmd(args):
-    convert_rais(args.data_dir, args.dest_dir)
-    convert_caged(args.data_dir, args.dest_dir)
+    convert_rais(args.input, args.output)
+    convert_caged(args.input, args.output)
 
 
 DATASETS = {
@@ -101,9 +101,9 @@ def columns_cmd(args):
         raise ValueError(f"Unknown dataset: {args.dataset}")
 
     config = DATASETS[args.dataset]
-    output_file = args.output_dir / f"{args.dataset}-columns.csv"
+    output_file = args.output / f"{args.dataset}-columns.csv"
     extract_columns_for_dataset(
-        args.data_dir,
+        args.input,
         config["glob_pattern"],
         output_file,
         encoding=config["encoding"],
@@ -121,9 +121,11 @@ def main():
         "fetch", help="Fetch data from FTP server"
     )
     fetch_parser.add_argument(
-        "dest_dir",
+        "-o",
+        "--output",
         type=Path,
-        help="Destination directory for downloaded files",
+        default=Path("/data/pdet"),
+        help="Destination directory (default: /data/pdet)",
     )
     fetch_parser.set_defaults(func=fetch_cmd)
 
@@ -131,9 +133,11 @@ def main():
         "list", help="List available files on FTP server"
     )
     list_parser.add_argument(
-        "dest_dir",
+        "-o",
+        "--output",
         type=Path,
-        help="Destination directory reference (to check what's already downloaded)",
+        default=Path("/data/pdet"),
+        help="Destination directory reference (default: /data/pdet)",
     )
     list_parser.set_defaults(func=list_files_cmd)
 
@@ -141,14 +145,18 @@ def main():
         "convert", help="Convert raw data files to Parquet"
     )
     convert_parser.add_argument(
-        "data_dir",
+        "-i",
+        "--input",
         type=Path,
+        required=True,
         help="Source directory with raw (compressed) data files",
     )
     convert_parser.add_argument(
-        "dest_dir",
+        "-o",
+        "--output",
         type=Path,
-        help="Destination directory for converted Parquet files",
+        default=Path("/data/pdet"),
+        help="Destination directory for converted Parquet files (default: /data/pdet)",
     )
     convert_parser.set_defaults(func=convert_cmd)
 
@@ -156,8 +164,10 @@ def main():
         "columns", help="Extract column names from raw data files"
     )
     columns_parser.add_argument(
-        "data_dir",
+        "-i",
+        "--input",
         type=Path,
+        required=True,
         help="Source directory with raw (compressed) data files",
     )
     columns_parser.add_argument(
@@ -166,7 +176,7 @@ def main():
     )
     columns_parser.add_argument(
         "-o",
-        "--output-dir",
+        "--output",
         type=Path,
         default=Path.cwd(),
         help="Directory to write columns CSV (default: current directory)",

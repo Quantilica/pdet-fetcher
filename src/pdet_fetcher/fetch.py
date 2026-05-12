@@ -1,33 +1,40 @@
 import datetime as dt
 import ftplib
 import re
+import time
+from collections.abc import Callable, Generator, Sequence
 from pathlib import Path
-from typing import Any, Callable, Generator, Sequence
+from typing import Any
 
-from quantilica_core.ftp import FtpClient
 import quantilica_core.metadata as core_meta
+from quantilica_core.ftp import FTP_TRANSIENT_ERRORS, FtpClient, ftp_connect
+from quantilica_core.retry import exponential_delay
 
 from . import logger
 from .meta import datasets, docs
-from .storage import DataRepository
-
 
 FTP_HOST = "ftp.mtps.gov.br"
+_PDET_FTP_TIMEOUT = 60.0
 
 _list_files_cache: dict[str, list[dict]] = {}
 
 # Global client for PDET
 client = FtpClient(FTP_HOST)
 
-
-def connect() -> ftplib.FTP:
-    """Connect to the PDET FTP server for compatibility."""
-    ftp = ftplib.FTP(FTP_HOST, encoding="latin-1")
-    ftp.login()
-    return ftp
+# AttributeError handles the case where ftp.sock is None after a silent connection drop.
+_FTP_ERRORS = FTP_TRANSIENT_ERRORS + (AttributeError,)
 
 
-_FTP_ERRORS = ftplib.all_errors + (AttributeError,)  # AttributeError: ftp.sock is None after silent drop
+def connect(attempts: int = 3) -> ftplib.FTP:
+    return ftp_connect(
+        FTP_HOST,
+        encoding="latin-1",
+        timeout=_PDET_FTP_TIMEOUT,
+        attempts=attempts,
+        base_delay=2.0,
+        max_delay=30.0,
+        jitter=1.0,
+    )
 
 
 def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
@@ -48,11 +55,21 @@ def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
         except _FTP_ERRORS as exc:
             if attempt >= 2:
                 raise
-            logger.warning("FTP error on attempt %d listing %s: %s. Reconnecting...", attempt + 1, directory, exc)
+            delay = exponential_delay(
+                attempt + 1, base_delay=2.0, max_delay=30.0, jitter=1.0
+            )
+            logger.warning(
+                "FTP error on attempt %d listing %s: %s. Reconnecting in %.1fs...",
+                attempt + 1,
+                directory,
+                exc,
+                delay,
+            )
             try:
                 active.close()
             except Exception:
                 pass
+            time.sleep(delay)
             active = connect()
 
     # parse files' date, size and name
@@ -95,6 +112,14 @@ def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
         file = parse_line(f)
         if file:
             files.append(file)
+
+    # Close the reconnected connection — the original ftp is the caller's responsibility.
+    if active is not ftp:
+        try:
+            active.quit()
+        except Exception:
+            pass
+
     _list_files_cache[directory] = files
     return files
 
@@ -116,7 +141,7 @@ def _get_date_dirs(
     for f in fi:
         if f["size"] is not None:
             continue
-        for pattern, groups in zip(patterns, groups_list):
+        for pattern, groups in zip(patterns, groups_list, strict=False):
             m = re.match(pattern, f["name"])
             if m:
                 group_meta = {"dir": f["name"]}
@@ -174,7 +199,9 @@ def _get_variation_files_metadata(
             yield file | group_meta
 
 
-def _list_dataset_files(ftp: ftplib.FTP, dataset: str) -> Generator[dict, None, None]:
+def _list_dataset_files(
+    ftp: ftplib.FTP, dataset: str
+) -> Generator[dict, None, None]:
     for variation in datasets[dataset]["variations"]:
         for f in _get_variation_files_metadata(ftp=ftp, variation=variation):
             yield f | {"dataset": dataset}
@@ -191,7 +218,7 @@ def _fetch_loop(
     for file in list_fn(ftp):
         ftp_filepath = file["full_path"]
         dest_filepath = get_filepath_fn(file, dest_dir)
-        
+
         # We use FtpClient.download_with_manifest to handle freshness, atomic write and manifest
         try:
             downloaded_path = client.download_with_manifest(
@@ -201,12 +228,12 @@ def _fetch_loop(
                 dataset_id=file.get("dataset", "unknown"),
                 producer="pdet-fetcher",
             )
-            
+
             metadata = file | {"filepath": downloaded_path}
             metadata_list.append(metadata)
         except Exception as e:
             logger.error(f"Failed to download {ftp_filepath}: {e}")
-            
+
     return metadata_list
 
 
@@ -231,11 +258,13 @@ def list_caged_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
 
 def fetch_caged(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
     from .storage import get_caged_filepath
+
     return _fetch_loop(ftp, list_caged, get_caged_filepath, dest_dir)
 
 
 def fetch_caged_docs(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
+
     return _fetch_loop(ftp, list_caged_docs, get_docs_filepath, dest_dir)
 
 
@@ -253,11 +282,15 @@ def list_caged_2020_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
 
 def fetch_caged_2020(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
     from .storage import get_caged_2020_filepath
+
     return _fetch_loop(ftp, list_caged_2020, get_caged_2020_filepath, dest_dir)
 
 
-def fetch_caged_2020_docs(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+def fetch_caged_2020_docs(
+    ftp: ftplib.FTP, dest_dir: Path
+) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
+
     return _fetch_loop(ftp, list_caged_2020_docs, get_docs_filepath, dest_dir)
 
 
@@ -272,21 +305,27 @@ def list_rais(ftp: ftplib.FTP) -> Generator[dict, None, None]:
 def list_rais_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
     for file in list_files(ftp, directory=docs["rais-vinculos"]["dir_path"]):
         yield file | {"dataset": "rais-vinculos"}
-    for file in list_files(ftp, directory=docs["rais-estabelecimentos"]["dir_path"]):
+    for file in list_files(
+        ftp, directory=docs["rais-estabelecimentos"]["dir_path"]
+    ):
         yield file | {"dataset": "rais-estabelecimentos"}
 
 
 def fetch_rais(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
     from .storage import get_rais_filepath
+
     return _fetch_loop(ftp, list_rais, get_rais_filepath, dest_dir)
 
 
 def fetch_rais_docs(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
+
     return _fetch_loop(ftp, list_rais_docs, get_docs_filepath, dest_dir)
 
 
-def generate_catalog(downloaded_files: list[dict]) -> core_meta.MetadataCatalog:
+def generate_catalog(
+    downloaded_files: list[dict],
+) -> core_meta.MetadataCatalog:
     """Generate a validated MetadataCatalog from a list of downloaded PDET files."""
     source_id = "pdet"
     source = core_meta.Source(
@@ -297,7 +336,7 @@ def generate_catalog(downloaded_files: list[dict]) -> core_meta.MetadataCatalog:
 
     datasets_map = {}
     resources = []
-    
+
     for file in downloaded_files:
         dataset_id = file.get("dataset", "unknown")
         if dataset_id not in datasets_map:
@@ -306,25 +345,25 @@ def generate_catalog(downloaded_files: list[dict]) -> core_meta.MetadataCatalog:
                 source_id=source_id,
                 name=dataset_id.upper().replace("-", " "),
             )
-            
+
         filename = file["filepath"].name
         resource_id = filename.replace(".", "_")
-        
+
         resources.append(
             core_meta.Resource(
                 id=resource_id,
                 dataset_id=dataset_id,
                 name=filename,
-                url=file["full_path"], # FTP path
+                url=file["full_path"],  # FTP path
                 format=file.get("extension", ""),
                 path=str(file["filepath"].absolute()),
                 metadata={
                     "remote_datetime": file["datetime"].isoformat(),
                     "size": file["size"],
-                }
+                },
             )
         )
-        
+
     catalog = core_meta.MetadataCatalog(
         sources=[source],
         datasets=list(datasets_map.values()),

@@ -9,6 +9,7 @@ from typing import Any
 import quantilica_core.metadata as core_meta
 from quantilica_core.ftp import FTP_TRANSIENT_ERRORS, FtpClient, ftp_connect
 from quantilica_core.retry import exponential_delay
+from tqdm import tqdm as _tqdm
 
 from . import logger
 from .meta import datasets, docs
@@ -212,14 +213,18 @@ def _fetch_loop(
     list_fn: Callable[[ftplib.FTP], Generator[dict, None, None]],
     get_filepath_fn: Callable[[dict, Path], Path],
     dest_dir: Path,
+    show_progress: bool = False,
 ) -> list[dict[str, Any]]:
     metadata_list = []
-    # We use the global client which wraps FtpClient from quantilica-core
-    for file in list_fn(ftp):
+    files = list(list_fn(ftp))
+    iterable = (
+        _tqdm(files, desc="Baixando PDET", unit=" arquivo", leave=True)
+        if show_progress
+        else files
+    )
+    for file in iterable:
         ftp_filepath = file["full_path"]
         dest_filepath = get_filepath_fn(file, dest_dir)
-
-        # We use FtpClient.download_with_manifest to handle freshness, atomic write and manifest
         try:
             downloaded_path = client.download_with_manifest(
                 ftp_filepath,
@@ -228,9 +233,7 @@ def _fetch_loop(
                 dataset_id=file.get("dataset", "unknown"),
                 producer="pdet-fetcher",
             )
-
-            metadata = file | {"filepath": downloaded_path}
-            metadata_list.append(metadata)
+            metadata_list.append(file | {"filepath": downloaded_path})
         except Exception as e:
             logger.error(f"Failed to download {ftp_filepath}: {e}")
 
@@ -256,16 +259,16 @@ def list_caged_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
         yield file | {"dataset": "caged-ajustes"}
 
 
-def fetch_caged(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+def fetch_caged(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
     from .storage import get_caged_filepath
 
-    return _fetch_loop(ftp, list_caged, get_caged_filepath, dest_dir)
+    return _fetch_loop(ftp, list_caged, get_caged_filepath, dest_dir, show_progress)
 
 
-def fetch_caged_docs(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+def fetch_caged_docs(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
 
-    return _fetch_loop(ftp, list_caged_docs, get_docs_filepath, dest_dir)
+    return _fetch_loop(ftp, list_caged_docs, get_docs_filepath, dest_dir, show_progress)
 
 
 def list_caged_2020(ftp: ftplib.FTP) -> Generator[dict, None, None]:
@@ -280,18 +283,18 @@ def list_caged_2020_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
         yield file | {"dataset": "caged-2020"}
 
 
-def fetch_caged_2020(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+def fetch_caged_2020(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
     from .storage import get_caged_2020_filepath
 
-    return _fetch_loop(ftp, list_caged_2020, get_caged_2020_filepath, dest_dir)
+    return _fetch_loop(ftp, list_caged_2020, get_caged_2020_filepath, dest_dir, show_progress)
 
 
 def fetch_caged_2020_docs(
-    ftp: ftplib.FTP, dest_dir: Path
+    ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False
 ) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
 
-    return _fetch_loop(ftp, list_caged_2020_docs, get_docs_filepath, dest_dir)
+    return _fetch_loop(ftp, list_caged_2020_docs, get_docs_filepath, dest_dir, show_progress)
 
 
 # -----------------------------------------------------------------------------
@@ -311,16 +314,16 @@ def list_rais_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
         yield file | {"dataset": "rais-estabelecimentos"}
 
 
-def fetch_rais(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+def fetch_rais(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
     from .storage import get_rais_filepath
 
-    return _fetch_loop(ftp, list_rais, get_rais_filepath, dest_dir)
+    return _fetch_loop(ftp, list_rais, get_rais_filepath, dest_dir, show_progress)
 
 
-def fetch_rais_docs(ftp: ftplib.FTP, dest_dir: Path) -> list[dict[str, Any]]:
+def fetch_rais_docs(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
 
-    return _fetch_loop(ftp, list_rais_docs, get_docs_filepath, dest_dir)
+    return _fetch_loop(ftp, list_rais_docs, get_docs_filepath, dest_dir, show_progress)
 
 
 def generate_catalog(

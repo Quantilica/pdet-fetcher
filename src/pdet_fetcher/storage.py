@@ -12,7 +12,7 @@ class DataRepository(BaseDataRepository):
     def get_docs_filepath(self, file_metadata: dict) -> Path:
         dataset = file_metadata["dataset"]
         filename = get_docs_filename(file_metadata)
-        return self.storage.path_for(f"docs/{dataset}/{filename}")
+        return self.storage.path_for(f"_documentacao/{dataset}/{filename}")
 
     def get_caged_filepath(self, file_metadata: dict) -> Path:
         dataset = file_metadata["dataset"]

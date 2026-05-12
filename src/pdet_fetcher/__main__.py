@@ -15,11 +15,9 @@ from . import (
     list_caged_2020,
     list_rais,
 )
-from .wrangling import convert_caged, convert_rais, extract_columns_for_dataset
+from quantilica_core.logging import configure_cli_logging
 
-logging.basicConfig(
-    level=logging.INFO, format="%(name)s - %(levelname)s - %(message)s"
-)
+from .wrangling import convert_caged, convert_rais, extract_columns_for_dataset
 
 
 def list_files_cmd(args):
@@ -51,14 +49,18 @@ def list_files_cmd(args):
 
 
 def fetch_cmd(args):
+    show_progress = not args.verbose
+    if not args.verbose:
+        logging.getLogger("pdet_fetcher").setLevel(logging.WARNING)
+        logging.getLogger("quantilica_core").setLevel(logging.WARNING)
     ftp = connect()
     try:
-        fetch_rais(ftp=ftp, dest_dir=args.output)
-        fetch_rais_docs(ftp=ftp, dest_dir=args.output)
-        fetch_caged(ftp=ftp, dest_dir=args.output)
-        fetch_caged_docs(ftp=ftp, dest_dir=args.output)
-        fetch_caged_2020(ftp=ftp, dest_dir=args.output)
-        fetch_caged_2020_docs(ftp=ftp, dest_dir=args.output)
+        fetch_rais(ftp=ftp, dest_dir=args.output, show_progress=show_progress)
+        fetch_rais_docs(ftp=ftp, dest_dir=args.output, show_progress=show_progress)
+        fetch_caged(ftp=ftp, dest_dir=args.output, show_progress=show_progress)
+        fetch_caged_docs(ftp=ftp, dest_dir=args.output, show_progress=show_progress)
+        fetch_caged_2020(ftp=ftp, dest_dir=args.output, show_progress=show_progress)
+        fetch_caged_2020_docs(ftp=ftp, dest_dir=args.output, show_progress=show_progress)
     finally:
         ftp.close()
 
@@ -133,6 +135,12 @@ def main():
         default=Path("/data/pdet"),
         help="Destination directory (default: /data/pdet)",
     )
+    fetch_parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=False,
+        help="Exibir logs detalhados em vez de barra de progresso",
+    )
     fetch_parser.set_defaults(func=fetch_cmd)
 
     list_parser = subparsers.add_parser(
@@ -190,6 +198,7 @@ def main():
     columns_parser.set_defaults(func=columns_cmd)
 
     args = parser.parse_args()
+    configure_cli_logging(verbose=getattr(args, "verbose", False))
 
     if not hasattr(args, "func"):
         parser.print_help()

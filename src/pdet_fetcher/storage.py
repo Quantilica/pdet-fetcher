@@ -9,32 +9,28 @@ class DataRepository(BaseDataRepository):
     def __init__(self, root: Path | str):
         super().__init__(root)
 
-    def raw_path(self, dataset_id: str, *subkeys: str) -> Path:
-        key = "/".join([dataset_id, *subkeys])
-        return self.storage.path_for(key)
-
     def get_docs_filepath(self, file_metadata: dict) -> Path:
         dataset = file_metadata["dataset"]
         filename = get_docs_filename(file_metadata)
-        return self.docs_path(dataset, filename)
+        return self.storage.path_for(f"docs/{dataset}/{filename}")
 
     def get_caged_filepath(self, file_metadata: dict) -> Path:
         dataset = file_metadata["dataset"]
         year = str(file_metadata["year"])
         filename = get_caged_filename(file_metadata)
-        return self.raw_path(dataset, year, filename)
+        return self.dataset_path(dataset, year, filename)
 
     def get_caged_2020_filepath(self, file_metadata: dict) -> Path:
         dataset = file_metadata["dataset"]
         year = str(file_metadata["year"])
         filename = get_caged_2020_filename(file_metadata)
-        return self.raw_path(dataset, year, filename)
+        return self.dataset_path(dataset, year, filename)
 
     def get_rais_filepath(self, file_metadata: dict) -> Path:
         dataset = file_metadata["dataset"]
         year = str(file_metadata["year"])
         filename = get_rais_filename(file_metadata)
-        return self.raw_path(dataset, year, filename)
+        return self.dataset_path(dataset, year, filename)
 
 
 def get_docs_filename(file_metadata: dict) -> str:

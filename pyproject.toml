@@ -40,7 +40,7 @@ Repository = "https://github.com/Quantilica/pdet-fetcher"
 Issues = "https://github.com/Quantilica/pdet-fetcher/issues"
 
 [project.scripts]
-pdet-fetcher = "pdet_fetcher.__main__:main"
+pdet-fetcher = "pdet_fetcher.cli:main"
 
 [project.entry-points."quantilica.fetchers"]
 pdet = "pdet_fetcher.plugin:app"

@@ -53,17 +53,20 @@ pip install git+https://github.com/Quantilica/pdet-fetcher.git
 
 ## CLI
 
-O pacote instala o comando `pdet-fetcher` (também acessível via `python -m pdet_fetcher`) com quatro subcomandos:
+O pacote instala o comando `pdet-fetcher` (também acessível via `python -m pdet_fetcher`) com cinco subcomandos:
 
 ```text
 pdet-fetcher <subcommand> [args]
 
 Subcommands:
-  fetch    DEST_DIR              Baixa todo o RAIS e CAGED (dados + docs) para DEST_DIR
-  list     DEST_DIR              Lista no FTP o que ainda falta baixar em DEST_DIR
-  convert  DATA_DIR DEST_DIR     Descompacta e converte CSVs em Parquet
-  columns  DATA_DIR DATASET [-o OUT_DIR]
-                                 Extrai os nomes de colunas de cada arquivo do dataset
+  sync     [DATASETS...] [-o DIR]   Sincroniza RAIS e CAGED (dados + docs). Sem
+                                    DATASETS, baixa rais, caged e caged-2020.
+  list     [-o DIR]                 Lista no FTP o que ainda falta baixar
+  convert  -i DATA_DIR [-o DIR]     Descompacta e converte CSVs em Parquet
+  columns  DATASET -i DATA_DIR [-o OUT_DIR]
+                                    Extrai os nomes de colunas de cada arquivo
+  pipeline [DATASETS...] [-o DIR] [--parquet-dir DIR]
+                                    Pipeline completo: sync -> convert
 ```
 
 `DATASET` em `columns` aceita: `rais-vinculos`, `rais-estabelecimentos`, `caged`, `caged-ajustes`, `caged-2020`.
@@ -75,7 +78,7 @@ Subcommands:
 ### Baixar todos os microdados
 
 ```bash
-pdet-fetcher fetch ./dados
+pdet-fetcher sync -o ./dados
 ```
 
 Equivalente em Python:
@@ -267,7 +270,9 @@ print(evolucao)
 ```
 src/pdet_fetcher/
 ├── __init__.py        # Re-exports da API pública
-├── __main__.py        # CLI (fetch / list / convert / columns)
+├── cli.py             # CLI nativa (sync / list / convert / columns / pipeline)
+├── __main__.py        # Entry point para `python -m pdet_fetcher`
+├── plugin.py          # Plugin Typer para quantilica-cli
 ├── fetch.py           # Conexão FTP, listagem e download
 ├── reader.py          # Leitura e tipagem dos CSVs
 ├── wrangling.py       # convert_rais, convert_caged, extract_columns_for_dataset

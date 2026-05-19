@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
+from rich.logging import RichHandler
+from rich.rule import Rule
 from rich.table import Table
 
 from pdet_fetcher import (
@@ -34,41 +36,102 @@ app = typer.Typer(help="Microdados do PDET (CAGED, RAIS).")
 _DEFAULT_OUTPUT = Path("/data/pdet")
 console = Console()
 
+# Datasets baixáveis e os fetchers (dados + docs) de cada um.
+_DATASET_FETCHERS = {
+    "rais": (fetch_rais, fetch_rais_docs),
+    "caged": (fetch_caged, fetch_caged_docs),
+    "caged-2020": (fetch_caged_2020, fetch_caged_2020_docs),
+}
+
+# Datasets reconhecidos pelo extrator de colunas.
 _DATASETS = {
-    "rais-estabelecimentos": {"glob_pattern": "rais-*.*", "has_uf": True, "encoding": "latin-1"},
-    "rais-vinculos": {"glob_pattern": "rais-*.*", "has_uf": True, "encoding": "latin-1"},
-    "caged": {"glob_pattern": "caged_*.*", "has_uf": False, "encoding": "latin-1"},
-    "caged-ajustes": {"glob_pattern": "caged-ajustes_*.*", "has_uf": False, "encoding": "latin-1"},
-    "caged-2020": {"glob_pattern": "caged-2020-*.*", "has_uf": False, "encoding": "utf-8"},
+    "rais-estabelecimentos": {
+        "glob_pattern": "rais-*.*",
+        "has_uf": True,
+        "encoding": "latin-1",
+    },
+    "rais-vinculos": {
+        "glob_pattern": "rais-*.*",
+        "has_uf": True,
+        "encoding": "latin-1",
+    },
+    "caged": {
+        "glob_pattern": "caged_*.*",
+        "has_uf": False,
+        "encoding": "latin-1",
+    },
+    "caged-ajustes": {
+        "glob_pattern": "caged-ajustes_*.*",
+        "has_uf": False,
+        "encoding": "latin-1",
+    },
+    "caged-2020": {
+        "glob_pattern": "caged-2020-*.*",
+        "has_uf": False,
+        "encoding": "utf-8",
+    },
 }
 
 
-@app.command("fetch")
-def cmd_fetch(
+def _setup_logging(verbose: bool) -> None:
+    """Configura logging via RichHandler para não quebrar barras de progresso.
+
+    verbose=False → WARNING apenas; verbose=True → DEBUG via Rich console.
+    """
+    level = logging.DEBUG if verbose else logging.WARNING
+    logging.basicConfig(
+        level=level,
+        format="%(message)s",
+        datefmt="[%X]",
+        handlers=[RichHandler(console=console, show_path=False)],
+        force=True,
+    )
+
+
+def _run_sync(targets: list[str], output: Path, show_progress: bool) -> None:
+    """Baixar os datasets selecionados via FTP."""
+    with console.status("[cyan]Conectando ao FTP do PDET...[/cyan]"):
+        ftp = connect()
+    try:
+        for dataset in targets:
+            data_fn, docs_fn = _DATASET_FETCHERS[dataset]
+            data_fn(ftp=ftp, dest_dir=output, show_progress=show_progress)
+            docs_fn(ftp=ftp, dest_dir=output, show_progress=show_progress)
+    finally:
+        ftp.close()
+
+
+@app.command("sync")
+def cmd_sync(
+    datasets: Annotated[
+        list[str] | None,
+        typer.Argument(
+            help=(
+                "Datasets (rais, caged, caged-2020)."
+                " Omitir para todos."
+            ),
+        ),
+    ] = None,
     output: Annotated[
         Path, typer.Option("-o", "--output", help="Diretório de destino")
     ] = _DEFAULT_OUTPUT,
     verbose: Annotated[
-        bool, typer.Option("--verbose", help="Exibir logs detalhados em vez de barra de progresso")
+        bool, typer.Option("--verbose", help="Logs detalhados")
     ] = False,
 ) -> None:
-    """Baixar dados do PDET via FTP."""
-    if not verbose:
-        logging.getLogger("pdet_fetcher").setLevel(logging.WARNING)
-        logging.getLogger("quantilica_core").setLevel(logging.WARNING)
-    show_progress = not verbose
-    with console.status("[cyan]Conectando ao FTP do PDET...[/cyan]"):
-        ftp = connect()
-    try:
-        fetch_rais(ftp=ftp, dest_dir=output, show_progress=show_progress)
-        fetch_rais_docs(ftp=ftp, dest_dir=output, show_progress=show_progress)
-        fetch_caged(ftp=ftp, dest_dir=output, show_progress=show_progress)
-        fetch_caged_docs(ftp=ftp, dest_dir=output, show_progress=show_progress)
-        fetch_caged_2020(ftp=ftp, dest_dir=output, show_progress=show_progress)
-        fetch_caged_2020_docs(ftp=ftp, dest_dir=output, show_progress=show_progress)
-    finally:
-        ftp.close()
-    console.print("[green]✓[/green] Download concluído.")
+    """Sincronizar microdados do PDET via FTP."""
+    _setup_logging(verbose)
+    targets = datasets if datasets else list(_DATASET_FETCHERS.keys())
+    invalid = [d for d in targets if d not in _DATASET_FETCHERS]
+    if invalid:
+        console.print(
+            f"[red]Erro:[/red] dataset(s) desconhecido(s): "
+            f"{', '.join(invalid)}"
+        )
+        raise typer.Exit(1)
+
+    _run_sync(targets, output, show_progress=not verbose)
+    console.print("[green]✓[/green] Sincronização concluída.")
 
 
 @app.command("list")
@@ -76,8 +139,12 @@ def cmd_list(
     output: Annotated[
         Path, typer.Option("-o", "--output", help="Diretório de referência")
     ] = _DEFAULT_OUTPUT,
+    verbose: Annotated[
+        bool, typer.Option("--verbose", help="Logs detalhados")
+    ] = False,
 ) -> None:
     """Listar arquivos disponíveis no FTP."""
+    _setup_logging(verbose)
     with console.status("[cyan]Conectando ao FTP do PDET...[/cyan]"):
         ftp = connect()
     try:
@@ -91,7 +158,9 @@ def cmd_list(
             for f in listing(ftp):
                 dest = output / f["dataset"] / str(f["year"]) / f["name"]
                 if not dest.exists():
-                    t.add_row(f["dataset"], str(f["year"]), f["name"], str(dest))
+                    t.add_row(
+                        f["dataset"], str(f["year"]), f["name"], str(dest)
+                    )
     finally:
         ftp.close()
     console.print(t)
@@ -100,13 +169,23 @@ def cmd_list(
 @app.command("convert")
 def cmd_convert(
     input: Annotated[
-        Path, typer.Option("-i", "--input", help="Diretório de origem com arquivos brutos")
+        Path,
+        typer.Option(
+            "-i", "--input", help="Diretório de origem com arquivos brutos"
+        ),
     ],
     output: Annotated[
-        Path, typer.Option("-o", "--output", help="Diretório de destino para Parquet")
+        Path,
+        typer.Option(
+            "-o", "--output", help="Diretório de destino para Parquet"
+        ),
     ] = _DEFAULT_OUTPUT,
+    verbose: Annotated[
+        bool, typer.Option("--verbose", help="Logs detalhados")
+    ] = False,
 ) -> None:
     """Converter arquivos brutos para Parquet."""
+    _setup_logging(verbose)
     convert_rais(input, output)
     convert_caged(input, output)
     console.print("[green]✓[/green] Conversão concluída.")
@@ -114,19 +193,81 @@ def cmd_convert(
 
 @app.command("columns")
 def cmd_columns(
-    dataset: Annotated[str, typer.Argument(help=f"Dataset ({', '.join(_DATASETS.keys())})")],
+    dataset: Annotated[
+        str,
+        typer.Argument(help=f"Dataset ({', '.join(_DATASETS.keys())})"),
+    ],
     input: Annotated[
-        Path, typer.Option("-i", "--input", help="Diretório de origem com arquivos brutos")
+        Path,
+        typer.Option(
+            "-i", "--input", help="Diretório de origem com arquivos brutos"
+        ),
     ],
     output: Annotated[
-        Path, typer.Option("-o", "--output", help="Diretório para CSV de colunas")
+        Path,
+        typer.Option("-o", "--output", help="Diretório para CSV de colunas"),
     ] = Path("."),
 ) -> None:
     """Extrair nomes de colunas dos arquivos brutos."""
     if dataset not in _DATASETS:
-        console.print(f"[red]Dataset desconhecido:[/red] {dataset}", stderr=True)
+        console.print(f"[red]Dataset desconhecido:[/red] {dataset}")
         raise typer.Exit(1)
     cfg = _DATASETS[dataset]
     output_file = output / f"{dataset}-columns.csv"
-    extract_columns_for_dataset(input, cfg["glob_pattern"], output_file, encoding=cfg["encoding"], has_uf=cfg["has_uf"])
-    console.print(f"[green]✓[/green] Colunas salvas em [bold]{output_file}[/bold]")
+    extract_columns_for_dataset(
+        input,
+        cfg["glob_pattern"],
+        output_file,
+        encoding=cfg["encoding"],
+        has_uf=cfg["has_uf"],
+    )
+    console.print(
+        f"[green]✓[/green] Colunas salvas em [bold]{output_file}[/bold]"
+    )
+
+
+@app.command("pipeline")
+def cmd_pipeline(
+    datasets: Annotated[
+        list[str] | None,
+        typer.Argument(
+            help="Datasets (rais, caged, caged-2020). Omitir para todos.",
+        ),
+    ] = None,
+    output: Annotated[
+        Path,
+        typer.Option("-o", "--output", help="Diretório de dados brutos"),
+    ] = _DEFAULT_OUTPUT,
+    parquet_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--parquet-dir",
+            help="Diretório para os Parquet (padrão: igual a --output)",
+        ),
+    ] = None,
+    verbose: Annotated[
+        bool, typer.Option("--verbose", help="Logs detalhados")
+    ] = False,
+) -> None:
+    """Pipeline completo do PDET (sync → convert)."""
+    _setup_logging(verbose)
+    targets = datasets if datasets else list(_DATASET_FETCHERS.keys())
+    invalid = [d for d in targets if d not in _DATASET_FETCHERS]
+    if invalid:
+        console.print(
+            f"[red]Erro:[/red] dataset(s) desconhecido(s): "
+            f"{', '.join(invalid)}"
+        )
+        raise typer.Exit(1)
+    parquet_out = parquet_dir or output
+
+    console.print(Rule("[bold]Passo 1/2: Download[/bold]"))
+    _run_sync(targets, output, show_progress=not verbose)
+    console.print("[green]✓[/green] Download concluído.")
+
+    console.print(Rule("[bold]Passo 2/2: Conversão[/bold]"))
+    convert_rais(output, parquet_out)
+    convert_caged(output, parquet_out)
+    console.print(
+        f"[green]✓[/green] Parquet salvo em [dim]{parquet_out}[/dim]"
+    )

@@ -1,6 +1,11 @@
 from pathlib import Path
 
-from quantilica_core.storage import BaseDataRepository, stamp_filename
+from quantilica_core.dates import year_month_partition
+from quantilica_core.storage import (
+    BaseDataRepository,
+    build_stamped_filename,
+    stamp_filename,
+)
 
 
 class DataRepository(BaseDataRepository):
@@ -50,12 +55,12 @@ def get_docs_filepath(file_metadata: dict, dest_dir: Path) -> Path:
 def get_caged_filename(file_metadata: dict) -> str:
     dataset = file_metadata["dataset"]
     year = file_metadata["year"]
-    partition = f"{year:04}"
-    if month := file_metadata.get("month"):
-        partition = partition + f"{month:02}"
+    partition = year_month_partition(year, file_metadata.get("month"))
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return stamp_filename(f"{dataset}_{partition}", extension, modified)
+    return build_stamped_filename(
+        dataset, partition, ext=extension, timestamp=modified
+    )
 
 
 def get_caged_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -70,10 +75,12 @@ def get_caged_2020_filename(file_metadata: dict) -> str:
     dataset = file_metadata["dataset"]
     year = file_metadata["year"]
     month = file_metadata["month"]
-    partition = f"{year:04}{month:02}"
+    partition = year_month_partition(year, month)
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return stamp_filename(f"{dataset}_{partition}", extension, modified)
+    return build_stamped_filename(
+        dataset, partition, ext=extension, timestamp=modified
+    )
 
 
 def get_caged_2020_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -95,7 +102,9 @@ def get_rais_filename(file_metadata: dict) -> str:
         partition = partition + f"-{region}"
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return stamp_filename(f"{dataset}_{partition}", extension, modified)
+    return build_stamped_filename(
+        dataset, partition, ext=extension, timestamp=modified
+    )
 
 
 def get_rais_filepath(file_metadata: dict, dest_dir: Path) -> Path:

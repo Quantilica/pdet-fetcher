@@ -5,13 +5,11 @@
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from typing import Annotated
 
 import typer
-from rich.console import Console
-from rich.logging import RichHandler
+from quantilica_core.cli import get_console, setup_rich_logging
 from rich.rule import Rule
 from rich.table import Table
 
@@ -34,7 +32,7 @@ from pdet_fetcher import (
 app = typer.Typer(help="Microdados do PDET (CAGED, RAIS).")
 
 _DEFAULT_OUTPUT = Path("/data/pdet")
-console = Console()
+console = get_console()
 
 # Datasets baixáveis e os fetchers (dados + docs) de cada um.
 _DATASET_FETCHERS = {
@@ -73,21 +71,6 @@ _DATASETS = {
 }
 
 
-def _setup_logging(verbose: bool) -> None:
-    """Configura logging via RichHandler para não quebrar barras de progresso.
-
-    verbose=False → WARNING apenas; verbose=True → DEBUG via Rich console.
-    """
-    level = logging.DEBUG if verbose else logging.WARNING
-    logging.basicConfig(
-        level=level,
-        format="%(message)s",
-        datefmt="[%X]",
-        handlers=[RichHandler(console=console, show_path=False)],
-        force=True,
-    )
-
-
 def _run_sync(targets: list[str], output: Path, show_progress: bool) -> None:
     """Baixar os datasets selecionados via FTP."""
     with console.status("[cyan]Conectando ao FTP do PDET...[/cyan]"):
@@ -120,7 +103,7 @@ def cmd_sync(
     ] = False,
 ) -> None:
     """Sincronizar microdados do PDET via FTP."""
-    _setup_logging(verbose)
+    setup_rich_logging(verbose, console=console)
     targets = datasets if datasets else list(_DATASET_FETCHERS.keys())
     invalid = [d for d in targets if d not in _DATASET_FETCHERS]
     if invalid:
@@ -144,7 +127,7 @@ def cmd_list(
     ] = False,
 ) -> None:
     """Listar arquivos disponíveis no FTP."""
-    _setup_logging(verbose)
+    setup_rich_logging(verbose, console=console)
     with console.status("[cyan]Conectando ao FTP do PDET...[/cyan]"):
         ftp = connect()
     try:
@@ -185,7 +168,7 @@ def cmd_convert(
     ] = False,
 ) -> None:
     """Converter arquivos brutos para Parquet."""
-    _setup_logging(verbose)
+    setup_rich_logging(verbose, console=console)
     convert_rais(input, output)
     convert_caged(input, output)
     console.print("[green]✓[/green] Conversão concluída.")
@@ -250,7 +233,7 @@ def cmd_pipeline(
     ] = False,
 ) -> None:
     """Pipeline completo do PDET (sync → convert)."""
-    _setup_logging(verbose)
+    setup_rich_logging(verbose, console=console)
     targets = datasets if datasets else list(_DATASET_FETCHERS.keys())
     invalid = [d for d in targets if d not in _DATASET_FETCHERS]
     if invalid:

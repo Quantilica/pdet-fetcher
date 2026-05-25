@@ -200,9 +200,7 @@ def _get_variation_files_metadata(
             yield file | group_meta
 
 
-def _list_dataset_files(
-    ftp: ftplib.FTP, dataset: str
-) -> Generator[dict, None, None]:
+def _list_dataset_files(ftp: ftplib.FTP, dataset: str) -> Generator[dict, None, None]:
     for variation in datasets[dataset]["variations"]:
         for f in _get_variation_files_metadata(ftp=ftp, variation=variation):
             yield f | {"dataset": dataset}
@@ -259,13 +257,17 @@ def list_caged_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
         yield file | {"dataset": "caged-ajustes"}
 
 
-def fetch_caged(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
+def fetch_caged(
+    ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False
+) -> list[dict[str, Any]]:
     from .storage import get_caged_filepath
 
     return _fetch_loop(ftp, list_caged, get_caged_filepath, dest_dir, show_progress)
 
 
-def fetch_caged_docs(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
+def fetch_caged_docs(
+    ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False
+) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
 
     return _fetch_loop(ftp, list_caged_docs, get_docs_filepath, dest_dir, show_progress)
@@ -283,10 +285,14 @@ def list_caged_2020_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
         yield file | {"dataset": "caged-2020"}
 
 
-def fetch_caged_2020(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
+def fetch_caged_2020(
+    ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False
+) -> list[dict[str, Any]]:
     from .storage import get_caged_2020_filepath
 
-    return _fetch_loop(ftp, list_caged_2020, get_caged_2020_filepath, dest_dir, show_progress)
+    return _fetch_loop(
+        ftp, list_caged_2020, get_caged_2020_filepath, dest_dir, show_progress
+    )
 
 
 def fetch_caged_2020_docs(
@@ -294,7 +300,9 @@ def fetch_caged_2020_docs(
 ) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
 
-    return _fetch_loop(ftp, list_caged_2020_docs, get_docs_filepath, dest_dir, show_progress)
+    return _fetch_loop(
+        ftp, list_caged_2020_docs, get_docs_filepath, dest_dir, show_progress
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -308,19 +316,21 @@ def list_rais(ftp: ftplib.FTP) -> Generator[dict, None, None]:
 def list_rais_docs(ftp: ftplib.FTP) -> Generator[dict, None, None]:
     for file in list_files(ftp, directory=docs["rais-vinculos"]["dir_path"]):
         yield file | {"dataset": "rais-vinculos"}
-    for file in list_files(
-        ftp, directory=docs["rais-estabelecimentos"]["dir_path"]
-    ):
+    for file in list_files(ftp, directory=docs["rais-estabelecimentos"]["dir_path"]):
         yield file | {"dataset": "rais-estabelecimentos"}
 
 
-def fetch_rais(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
+def fetch_rais(
+    ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False
+) -> list[dict[str, Any]]:
     from .storage import get_rais_filepath
 
     return _fetch_loop(ftp, list_rais, get_rais_filepath, dest_dir, show_progress)
 
 
-def fetch_rais_docs(ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False) -> list[dict[str, Any]]:
+def fetch_rais_docs(
+    ftp: ftplib.FTP, dest_dir: Path, show_progress: bool = False
+) -> list[dict[str, Any]]:
     from .storage import get_docs_filepath
 
     return _fetch_loop(ftp, list_rais_docs, get_docs_filepath, dest_dir, show_progress)

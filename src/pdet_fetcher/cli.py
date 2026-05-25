@@ -66,9 +66,7 @@ def _resolve_targets(datasets: list[str] | None) -> list[str]:
     targets = datasets if datasets else list(_DATASET_FETCHERS.keys())
     invalid = [d for d in targets if d not in _DATASET_FETCHERS]
     if invalid:
-        raise SystemExit(
-            f"Erro: dataset(s) desconhecido(s): {', '.join(invalid)}"
-        )
+        raise SystemExit(f"Erro: dataset(s) desconhecido(s): {', '.join(invalid)}")
     return targets
 
 
@@ -96,9 +94,7 @@ def handle_list(args: argparse.Namespace) -> None:
     try:
         for listing in (list_caged, list_caged_2020, list_rais):
             for f in listing(ftp):
-                dest = (
-                    args.output / f["dataset"] / str(f["year"]) / f["name"]
-                )
+                dest = args.output / f["dataset"] / str(f["year"]) / f["name"]
                 if not dest.exists():
                     print(f["full_path"], "-->", dest)
     finally:
@@ -172,9 +168,7 @@ def get_parser() -> argparse.ArgumentParser:
     p_sync.set_defaults(func=handle_sync)
 
     # list
-    p_list = subparsers.add_parser(
-        "list", help="Listar arquivos disponíveis no FTP"
-    )
+    p_list = subparsers.add_parser("list", help="Listar arquivos disponíveis no FTP")
     p_list.add_argument(
         "-o",
         "--output",

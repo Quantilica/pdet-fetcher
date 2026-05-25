@@ -89,18 +89,13 @@ def cmd_sync(
     datasets: Annotated[
         list[str] | None,
         typer.Argument(
-            help=(
-                "Datasets (rais, caged, caged-2020)."
-                " Omitir para todos."
-            ),
+            help=("Datasets (rais, caged, caged-2020). Omitir para todos."),
         ),
     ] = None,
     output: Annotated[
         Path, typer.Option("-o", "--output", help="Diretório de destino")
     ] = _DEFAULT_OUTPUT,
-    verbose: Annotated[
-        bool, typer.Option("--verbose", help="Logs detalhados")
-    ] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", help="Logs detalhados")] = False,
 ) -> None:
     """Sincronizar microdados do PDET via FTP."""
     setup_rich_logging(verbose, console=console)
@@ -108,8 +103,7 @@ def cmd_sync(
     invalid = [d for d in targets if d not in _DATASET_FETCHERS]
     if invalid:
         console.print(
-            f"[red]Erro:[/red] dataset(s) desconhecido(s): "
-            f"{', '.join(invalid)}"
+            f"[red]Erro:[/red] dataset(s) desconhecido(s): {', '.join(invalid)}"
         )
         raise typer.Exit(1)
 
@@ -122,9 +116,7 @@ def cmd_list(
     output: Annotated[
         Path, typer.Option("-o", "--output", help="Diretório de referência")
     ] = _DEFAULT_OUTPUT,
-    verbose: Annotated[
-        bool, typer.Option("--verbose", help="Logs detalhados")
-    ] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", help="Logs detalhados")] = False,
 ) -> None:
     """Listar arquivos disponíveis no FTP."""
     setup_rich_logging(verbose, console=console)
@@ -141,9 +133,7 @@ def cmd_list(
             for f in listing(ftp):
                 dest = output / f["dataset"] / str(f["year"]) / f["name"]
                 if not dest.exists():
-                    t.add_row(
-                        f["dataset"], str(f["year"]), f["name"], str(dest)
-                    )
+                    t.add_row(f["dataset"], str(f["year"]), f["name"], str(dest))
     finally:
         ftp.close()
     console.print(t)
@@ -153,19 +143,13 @@ def cmd_list(
 def cmd_convert(
     input: Annotated[
         Path,
-        typer.Option(
-            "-i", "--input", help="Diretório de origem com arquivos brutos"
-        ),
+        typer.Option("-i", "--input", help="Diretório de origem com arquivos brutos"),
     ],
     output: Annotated[
         Path,
-        typer.Option(
-            "-o", "--output", help="Diretório de destino para Parquet"
-        ),
+        typer.Option("-o", "--output", help="Diretório de destino para Parquet"),
     ] = _DEFAULT_OUTPUT,
-    verbose: Annotated[
-        bool, typer.Option("--verbose", help="Logs detalhados")
-    ] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", help="Logs detalhados")] = False,
 ) -> None:
     """Converter arquivos brutos para Parquet."""
     setup_rich_logging(verbose, console=console)
@@ -182,9 +166,7 @@ def cmd_columns(
     ],
     input: Annotated[
         Path,
-        typer.Option(
-            "-i", "--input", help="Diretório de origem com arquivos brutos"
-        ),
+        typer.Option("-i", "--input", help="Diretório de origem com arquivos brutos"),
     ],
     output: Annotated[
         Path,
@@ -204,9 +186,7 @@ def cmd_columns(
         encoding=cfg["encoding"],
         has_uf=cfg["has_uf"],
     )
-    console.print(
-        f"[green]✓[/green] Colunas salvas em [bold]{output_file}[/bold]"
-    )
+    console.print(f"[green]✓[/green] Colunas salvas em [bold]{output_file}[/bold]")
 
 
 @app.command("pipeline")
@@ -228,9 +208,7 @@ def cmd_pipeline(
             help="Diretório para os Parquet (padrão: igual a --output)",
         ),
     ] = None,
-    verbose: Annotated[
-        bool, typer.Option("--verbose", help="Logs detalhados")
-    ] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", help="Logs detalhados")] = False,
 ) -> None:
     """Pipeline completo do PDET (sync → convert)."""
     setup_rich_logging(verbose, console=console)
@@ -238,8 +216,7 @@ def cmd_pipeline(
     invalid = [d for d in targets if d not in _DATASET_FETCHERS]
     if invalid:
         console.print(
-            f"[red]Erro:[/red] dataset(s) desconhecido(s): "
-            f"{', '.join(invalid)}"
+            f"[red]Erro:[/red] dataset(s) desconhecido(s): {', '.join(invalid)}"
         )
         raise typer.Exit(1)
     parquet_out = parquet_dir or output
@@ -251,6 +228,4 @@ def cmd_pipeline(
     console.print(Rule("[bold]Passo 2/2: Conversão[/bold]"))
     convert_rais(output, parquet_out)
     convert_caged(output, parquet_out)
-    console.print(
-        f"[green]✓[/green] Parquet salvo em [dim]{parquet_out}[/dim]"
-    )
+    console.print(f"[green]✓[/green] Parquet salvo em [dim]{parquet_out}[/dim]")

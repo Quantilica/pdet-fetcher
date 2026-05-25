@@ -58,9 +58,7 @@ def get_caged_filename(file_metadata: dict) -> str:
     partition = year_month_partition(year, file_metadata.get("month"))
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return build_stamped_filename(
-        dataset, partition, ext=extension, timestamp=modified
-    )
+    return build_stamped_filename(dataset, partition, ext=extension, timestamp=modified)
 
 
 def get_caged_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -78,9 +76,7 @@ def get_caged_2020_filename(file_metadata: dict) -> str:
     partition = year_month_partition(year, month)
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return build_stamped_filename(
-        dataset, partition, ext=extension, timestamp=modified
-    )
+    return build_stamped_filename(dataset, partition, ext=extension, timestamp=modified)
 
 
 def get_caged_2020_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -102,9 +98,7 @@ def get_rais_filename(file_metadata: dict) -> str:
         partition = partition + f"-{region}"
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return build_stamped_filename(
-        dataset, partition, ext=extension, timestamp=modified
-    )
+    return build_stamped_filename(dataset, partition, ext=extension, timestamp=modified)
 
 
 def get_rais_filepath(file_metadata: dict, dest_dir: Path) -> Path:

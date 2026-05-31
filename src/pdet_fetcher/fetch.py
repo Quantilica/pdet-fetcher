@@ -1,3 +1,4 @@
+import contextlib
 import datetime as dt
 import ftplib
 import re
@@ -10,6 +11,19 @@ import quantilica_core.metadata as core_meta
 from quantilica_core.ftp import FTP_TRANSIENT_ERRORS, FtpClient, ftp_connect
 from quantilica_core.retry import exponential_delay
 from tqdm import tqdm as _tqdm
+
+try:
+    from quantilica_core.cli import (
+        get_console,
+        make_batch_progress,
+        make_download_progress,
+    )
+    from rich.console import Group
+    from rich.live import Live
+
+    _RICH_AVAILABLE = True
+except (ModuleNotFoundError, ImportError):  # pragma: no cover
+    _RICH_AVAILABLE = False
 
 from . import logger
 from .meta import datasets, docs
@@ -114,7 +128,7 @@ def list_files(ftp: ftplib.FTP, directory: str) -> list[dict]:
         if file:
             files.append(file)
 
-    # Close the reconnected connection — the original ftp is the caller's responsibility.
+    # Close the reconnected connection — original ftp is the caller's responsibility.
     if active is not ftp:
         try:
             active.quit()
@@ -215,25 +229,90 @@ def _fetch_loop(
 ) -> list[dict[str, Any]]:
     metadata_list = []
     files = list(list_fn(ftp))
-    iterable = (
-        _tqdm(files, desc="Baixando PDET", unit=" arquivo", leave=True)
-        if show_progress
-        else files
-    )
-    for file in iterable:
-        ftp_filepath = file["full_path"]
-        dest_filepath = get_filepath_fn(file, dest_dir)
-        try:
-            downloaded_path = client.download_with_manifest(
-                ftp_filepath,
-                dest_filepath,
-                source_id="pdet",
-                dataset_id=file.get("dataset", "unknown"),
-                producer="pdet-fetcher",
-            )
-            metadata_list.append(file | {"filepath": downloaded_path})
-        except Exception as e:
-            logger.error(f"Failed to download {ftp_filepath}: {e}")
+    if not files:
+        return metadata_list
+
+    groups: dict[str, list[dict]] = {}
+    for f in files:
+        groups.setdefault(f.get("dataset", "unknown"), []).append(f)
+
+    live = None
+    batch_progress = file_progress = None
+
+    if show_progress and _RICH_AVAILABLE:
+        console = get_console()
+        batch_progress = make_batch_progress(console)
+        file_progress = make_download_progress(console)
+        live = Live(
+            Group(batch_progress, file_progress),
+            console=console,
+            refresh_per_second=10,
+        )
+        live.start()
+
+    try:
+        for dataset_name, dataset_files in groups.items():
+            batch_task = None
+            pbar = None
+
+            if show_progress:
+                if batch_progress is not None:
+                    batch_task = batch_progress.add_task(
+                        f"[cyan]{dataset_name}[/cyan]",
+                        total=len(dataset_files),
+                    )
+                else:
+                    total_bytes = sum(f["size"] or 0 for f in dataset_files)
+                    pbar = _tqdm(
+                        total=total_bytes,
+                        desc=dataset_name,
+                        unit="B",
+                        unit_scale=True,
+                        unit_divisor=1024,
+                        leave=True,
+                    )
+
+            for file in dataset_files:
+                ftp_filepath = file["full_path"]
+                dest_filepath = get_filepath_fn(file, dest_dir)
+
+                task_id = None
+                if file_progress is not None:
+                    task_id = file_progress.add_task(
+                        file["name"], total=file["size"] or 0
+                    )
+
+                def _chunk_cb(n: int, _tid=task_id) -> None:
+                    if _tid is not None:
+                        file_progress.update(_tid, advance=n)
+
+                try:
+                    downloaded_path = client.download_with_manifest(
+                        ftp_filepath,
+                        dest_filepath,
+                        source_id="pdet",
+                        dataset_id=file.get("dataset", "unknown"),
+                        producer="pdet-fetcher",
+                        progress_callback=_chunk_cb if task_id is not None else None,
+                    )
+                    metadata_list.append(file | {"filepath": downloaded_path})
+                except Exception as e:
+                    logger.error(f"Failed to download {ftp_filepath}: {e}")
+                finally:
+                    if task_id is not None:
+                        with contextlib.suppress(Exception):
+                            file_progress.remove_task(task_id)
+                    if batch_task is not None:
+                        batch_progress.update(batch_task, advance=1)
+                    elif pbar is not None:
+                        pbar.update(file["size"] or 0)
+
+            if pbar is not None:
+                pbar.close()
+    finally:
+        if live is not None:
+            with contextlib.suppress(Exception):
+                live.stop()
 
     return metadata_list
 

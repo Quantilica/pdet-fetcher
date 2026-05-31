@@ -14,7 +14,6 @@ from rich.rule import Rule
 from rich.table import Table
 
 from pdet_fetcher import (
-    connect,
     convert_caged,
     convert_rais,
     extract_columns_for_dataset,
@@ -73,15 +72,10 @@ _DATASETS = {
 
 def _run_sync(targets: list[str], output: Path, show_progress: bool) -> None:
     """Baixar os datasets selecionados via FTP."""
-    with console.status("[cyan]Conectando ao FTP do PDET...[/cyan]"):
-        ftp = connect()
-    try:
-        for dataset in targets:
-            data_fn, docs_fn = _DATASET_FETCHERS[dataset]
-            data_fn(ftp=ftp, dest_dir=output, show_progress=show_progress)
-            docs_fn(ftp=ftp, dest_dir=output, show_progress=show_progress)
-    finally:
-        ftp.close()
+    for dataset in targets:
+        data_fn, docs_fn = _DATASET_FETCHERS[dataset]
+        data_fn(dest_dir=output, show_progress=show_progress)
+        docs_fn(dest_dir=output, show_progress=show_progress)
 
 
 @app.command("sync")
@@ -120,22 +114,17 @@ def cmd_list(
 ) -> None:
     """Listar arquivos disponíveis no FTP."""
     setup_rich_logging(verbose, console=console)
-    with console.status("[cyan]Conectando ao FTP do PDET...[/cyan]"):
-        ftp = connect()
-    try:
-        t = Table(show_header=True, header_style="bold")
-        t.add_column("Dataset", style="cyan")
-        t.add_column("Ano", justify="right")
-        t.add_column("Arquivo")
-        t.add_column("Destino")
+    t = Table(show_header=True, header_style="bold")
+    t.add_column("Dataset", style="cyan")
+    t.add_column("Ano", justify="right")
+    t.add_column("Arquivo")
+    t.add_column("Destino")
 
-        for listing in (list_caged, list_caged_2020, list_rais):
-            for f in listing(ftp):
-                dest = output / f["dataset"] / str(f["year"]) / f["name"]
-                if not dest.exists():
-                    t.add_row(f["dataset"], str(f["year"]), f["name"], str(dest))
-    finally:
-        ftp.close()
+    for listing in (list_caged, list_caged_2020, list_rais):
+        for f in listing():
+            dest = output / f["dataset"] / str(f["year"]) / f["name"]
+            if not dest.exists():
+                t.add_row(f["dataset"], str(f["year"]), f["name"], str(dest))
     console.print(t)
 
 

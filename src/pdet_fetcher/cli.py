@@ -82,9 +82,6 @@ def _run_sync(targets: list[str], output: Path, show_progress: bool) -> None:
 
 
 def handle_sync(args: argparse.Namespace) -> None:
-    if not args.verbose:
-        logging.getLogger("pdet_fetcher").setLevel(logging.WARNING)
-        logging.getLogger("quantilica_core").setLevel(logging.WARNING)
     targets = _resolve_targets(args.datasets)
     _run_sync(targets, args.output, show_progress=not args.verbose)
 
@@ -121,9 +118,6 @@ def handle_columns(args: argparse.Namespace) -> None:
 
 
 def handle_pipeline(args: argparse.Namespace) -> None:
-    if not args.verbose:
-        logging.getLogger("pdet_fetcher").setLevel(logging.WARNING)
-        logging.getLogger("quantilica_core").setLevel(logging.WARNING)
     targets = _resolve_targets(args.datasets)
     parquet_out = args.parquet_dir or args.output
     _run_sync(targets, args.output, show_progress=not args.verbose)
@@ -252,7 +246,10 @@ def get_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> None:
     parser = get_parser()
     args = parser.parse_args(argv)
-    configure_cli_logging(verbose=getattr(args, "verbose", False))
+    configure_cli_logging(verbose=args.verbose)
+    if not args.verbose:
+        logging.getLogger("quantilica_core").setLevel(logging.WARNING)
+        logging.getLogger("pdet_fetcher").setLevel(logging.WARNING)
     args.func(args)
 
 

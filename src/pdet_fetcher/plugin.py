@@ -101,8 +101,12 @@ def cmd_sync(
         )
         raise typer.Exit(1)
 
-    _run_sync(targets, output, show_progress=not verbose)
-    console.print("[green]✓[/green] Sincronização concluída.")
+    try:
+        _run_sync(targets, output, show_progress=not verbose)
+        console.print("[green]✓[/green] Sincronização concluída.")
+    except KeyboardInterrupt:
+        console.print("[yellow]Sincronização cancelada pelo usuário.[/yellow]")
+        raise typer.Exit(code=130)
 
 
 @app.command("list")
@@ -210,11 +214,15 @@ def cmd_pipeline(
         raise typer.Exit(1)
     parquet_out = parquet_dir or output
 
-    console.print(Rule("[bold]Passo 1/2: Download[/bold]"))
-    _run_sync(targets, output, show_progress=not verbose)
-    console.print("[green]✓[/green] Download concluído.")
+    try:
+        console.print(Rule("[bold]Passo 1/2: Download[/bold]"))
+        _run_sync(targets, output, show_progress=not verbose)
+        console.print("[green]✓[/green] Download concluído.")
 
-    console.print(Rule("[bold]Passo 2/2: Conversão[/bold]"))
-    convert_rais(output, parquet_out)
-    convert_caged(output, parquet_out)
-    console.print(f"[green]✓[/green] Parquet salvo em [dim]{parquet_out}[/dim]")
+        console.print(Rule("[bold]Passo 2/2: Conversão[/bold]"))
+        convert_rais(output, parquet_out)
+        convert_caged(output, parquet_out)
+        console.print(f"[green]✓[/green] Parquet salvo em [dim]{parquet_out}[/dim]")
+    except KeyboardInterrupt:
+        console.print("[yellow]Pipeline cancelado pelo usuário.[/yellow]")
+        raise typer.Exit(code=130)

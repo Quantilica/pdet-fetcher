@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 from quantilica_core.logging import configure_cli_logging
@@ -250,7 +251,11 @@ def main(argv: list[str] | None = None) -> None:
     if not args.verbose:
         logging.getLogger("quantilica_core").setLevel(logging.WARNING)
         logging.getLogger("pdet_fetcher").setLevel(logging.WARNING)
-    args.func(args)
+    try:
+        args.func(args)
+    except KeyboardInterrupt:
+        print("\nOperação cancelada pelo usuário.", file=sys.stderr)
+        sys.exit(130)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from quantilica_core.dates import year_month_partition
-from quantilica_core.storage import (
+from quantilica.core.dates import year_month_partition
+from quantilica.core.storage import (
     BaseDataRepository,
     build_stamped_filename,
     stamp_filename,

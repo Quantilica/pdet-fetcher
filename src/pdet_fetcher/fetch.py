@@ -7,13 +7,13 @@ from collections.abc import Callable, Generator, Sequence
 from pathlib import Path
 from typing import Any
 
-import quantilica_core.metadata as core_meta
-from quantilica_core.ftp import FTP_TRANSIENT_ERRORS, FtpClient, ftp_connect
-from quantilica_core.retry import exponential_delay
+import quantilica.core.metadata as core_meta
+from quantilica.core.ftp import FTP_TRANSIENT_ERRORS, FtpClient, ftp_connect
+from quantilica.core.retry import exponential_delay
 from tqdm import tqdm as _tqdm
 
 try:
-    from quantilica_core.cli import (
+    from quantilica.core.cli import (
         get_console,
         make_batch_progress,
         make_download_progress,
@@ -357,7 +357,9 @@ def fetch_caged_2020(
 ) -> list[dict[str, Any]]:
     from .storage import get_caged_2020_filepath
 
-    return _fetch_loop(list_caged_2020, get_caged_2020_filepath, dest_dir, show_progress)
+    return _fetch_loop(
+        list_caged_2020, get_caged_2020_filepath, dest_dir, show_progress
+    )
 
 
 def fetch_caged_2020_docs(

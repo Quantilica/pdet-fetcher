@@ -3,7 +3,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from pdet_fetcher.constants import (
     CAGED_COLUMNS,
     RAIS_ESTABELECIMENTOS_COLUMNS,

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.4] - 2026-10-02
+
+### Corrigido
+- Refatoração de `cli.py` para o padrão canônico de thin wrapper sobre
+  `plugin.py` (`from .plugin import app`), eliminando `ImportError` de
+  `fetch_caged`/`fetch_rais` na importação do módulo.
+
 ## [0.5.3] - 2026-10-02
 
 ### Corrigido

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3] - 2026-10-02
+
+### Corrigido
+- Remoção de `polars>=1.0.0` de `[project.dependencies]`, assegurando a adesão estrita ao princípio de Pure Fetcher.
+- Manutenção de `polars>=1.39` exclusivamente em `[project.optional-dependencies].analysis`.
+- Atualização do workflow `.github/workflows/test.yml` para instalar `--extra analysis` no `uv sync`.
+
 ## [0.5.2] - 2026-08-31
 ### Corrigido
 - Quitação de dívida de lint (E501/docstrings longas) herdada dos sweeps de

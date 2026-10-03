@@ -5,7 +5,7 @@ import re
 import time
 from collections.abc import Generator, Sequence
 
-from quantilica.core.ftp import FTP_TRANSIENT_ERRORS, FtpClient, ftp_connect
+from quantilica.core.ftp import FTP_TRANSIENT_ERRORS, ftp_connect
 from quantilica.core.retry import exponential_delay
 
 try:
@@ -20,9 +20,6 @@ FTP_HOST = "ftp.mtps.gov.br"
 _PDET_FTP_TIMEOUT = 60.0
 
 _list_files_cache: dict[str, list[dict]] = {}
-
-# Global client for PDET
-client = FtpClient(FTP_HOST)
 
 # AttributeError handles the case where ftp.sock is None after a silent connection drop.
 _FTP_ERRORS = FTP_TRANSIENT_ERRORS + (AttributeError,)

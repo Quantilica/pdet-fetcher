@@ -1,5 +1,11 @@
 # Changelog
 
+## [Não lançado]
+
+### Alterado
+- `reader.decompress` agora delega a descompressão de arquivos brutos para `quantilica.core.files.decompress_archive`, eliminando invocação direta de subprocesso `7z`.
+- Remoção de instância estática global de `FtpClient` no escopo do módulo `fetch.py`.
+
 ## [0.5.4] - 2026-10-02
 
 ### Corrigido

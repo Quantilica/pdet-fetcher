@@ -1,8 +1,9 @@
 """Tests for pdet_fetcher.reader — schema resolution and decompress errors."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+from quantilica.core.exceptions import StorageError
 
 from pdet_fetcher.constants import (
     CAGED_COLUMNS,
@@ -24,10 +25,10 @@ class TestDecompress:
 
     def test_raises_on_nonzero_returncode(self, tmp_path):
         meta = self._meta(tmp_path)
-        result = MagicMock()
-        result.returncode = 1
-        result.stderr = b"Error: file not found"
-        with patch("pdet_fetcher.reader.subprocess.run", return_value=result):
+        with patch(
+            "pdet_fetcher.reader.decompress_archive",
+            side_effect=StorageError("7z failed decompressing: Error: file not found"),
+        ):
             with patch(
                 "pdet_fetcher.reader.tempfile.mkdtemp",
                 return_value=str(tmp_path),
@@ -37,27 +38,27 @@ class TestDecompress:
 
     def test_raises_when_no_files_extracted(self, tmp_path):
         meta = self._meta(tmp_path)
-        result = MagicMock()
-        result.returncode = 0
-        empty_dir = tmp_path / "empty"
-        empty_dir.mkdir()
-        with patch("pdet_fetcher.reader.subprocess.run", return_value=result):
+        with patch(
+            "pdet_fetcher.reader.decompress_archive",
+            side_effect=StorageError("no files found in archive"),
+        ):
             with patch(
                 "pdet_fetcher.reader.tempfile.mkdtemp",
-                return_value=str(empty_dir),
+                return_value=str(tmp_path),
             ):
                 with pytest.raises(RuntimeError, match="no files"):
                     decompress(meta)
 
     def test_returns_decompressed_filepath(self, tmp_path):
         meta = self._meta(tmp_path)
-        result = MagicMock()
-        result.returncode = 0
         out_dir = tmp_path / "out"
         out_dir.mkdir()
         extracted = out_dir / "data.csv"
         extracted.write_text("a;b\n1;2\n")
-        with patch("pdet_fetcher.reader.subprocess.run", return_value=result):
+        with patch(
+            "pdet_fetcher.reader.decompress_archive",
+            return_value=extracted,
+        ):
             with patch(
                 "pdet_fetcher.reader.tempfile.mkdtemp",
                 return_value=str(out_dir),

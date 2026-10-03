@@ -1,11 +1,12 @@
 import logging
 import re
-import subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
 
 import polars as pl
+from quantilica.core.exceptions import StorageError
+from quantilica.core.files import decompress_archive
 
 from .constants import (
     BOOLEAN_COLUMNS,
@@ -228,7 +229,7 @@ def write_parquet(df: pl.DataFrame, filepath: Path) -> Path:
 
 
 def decompress(file_metadata: dict[str, Any]) -> dict[str, Path]:
-    """Decompresses an archive file using 7z.
+    """Decompresses an archive file using quantilica.core.files.decompress_archive.
 
     Args:
         file_metadata (dict[str, Any]): A dictionary containing metadata
@@ -239,30 +240,19 @@ def decompress(file_metadata: dict[str, Any]) -> dict[str, Path]:
             temporary directory and decompressed file.
 
     Raises:
-        RuntimeError: If 7z fails to decompress or produces no output files.
+        RuntimeError: If decompression fails or produces no output files.
     """
-    compressed_filepath = file_metadata["filepath"]
+    compressed_filepath = Path(file_metadata["filepath"])
     logger.info("Decompressing %s", compressed_filepath)
     tmp_dir = Path(tempfile.mkdtemp(prefix="pdet"))
-    command = [
-        "7z",
-        "e",
-        str(compressed_filepath),
-        f"-o{tmp_dir}",
-    ]
-    result = subprocess.run(
-        command,
-        capture_output=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"7z failed decompressing {compressed_filepath}: "
-            f"{result.stderr.decode(errors='replace')}"
+    try:
+        decompressed_filepath = decompress_archive(
+            compressed_filepath, output_dir=tmp_dir
         )
-    extracted = list(tmp_dir.iterdir())
-    if not extracted:
-        raise RuntimeError(f"7z produced no files from {compressed_filepath}")
-    decompressed_filepath = extracted[0]
+    except StorageError as exc:
+        raise RuntimeError(
+            f"7z failed decompressing {compressed_filepath}: {exc}"
+        ) from exc
     return file_metadata | {
         "tmp_dir": tmp_dir,
         "decompressed_filepath": decompressed_filepath,

@@ -1,8 +1,14 @@
 # Changelog
 
+Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
+
+O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
+e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
+
 ## [Não lançado]
 
 ### Alterado
+- `cli.py` protege o import do plugin; sem o host a CLI standalone sai com código 1 e orienta `quantilica install pdet`.
 - `reader.decompress` agora delega a descompressão de arquivos brutos para `quantilica.core.files.decompress_archive`, eliminando invocação direta de subprocesso `7z`.
 - Remoção de instância estática global de `FtpClient` no escopo do módulo `fetch.py`.
 
@@ -38,11 +44,6 @@
 ## [0.4.0] - 2026-08-07
 ### Alterado
 - Refatoração arquitetural: Remoção de dependências (`quantilica-cli` e `quantilica-catalog`) e limpeza de imports. Os fetchers agora são pacotes de extração puros, dependendo estritamente do `quantilica-core`.
-
-Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
-
-O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
-e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [0.2.0] - 2026-05-19
 

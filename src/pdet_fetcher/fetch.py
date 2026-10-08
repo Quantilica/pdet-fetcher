@@ -8,11 +8,6 @@ from collections.abc import Generator, Sequence
 from quantilica.core.ftp import FTP_TRANSIENT_ERRORS, ftp_connect
 from quantilica.core.retry import exponential_delay
 
-try:
-    _RICH_AVAILABLE = True
-except (ModuleNotFoundError, ImportError):  # pragma: no cover
-    _RICH_AVAILABLE = False
-
 from . import logger
 from .meta import datasets, docs
 

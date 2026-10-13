@@ -209,6 +209,30 @@ def _list_dataset_files(dataset: str) -> Generator[dict, None, None]:
             yield f | {"dataset": dataset, "group": dataset}
 
 
+def _doc_entry(file: dict, dataset: str) -> dict:
+    """Mark a listed file as a documentation entry of ``dataset``.
+
+    Documentation files (layouts, leia-me) have no year/month in their names
+    and live under ``_documentacao/`` locally. ``is_doc`` lets the path
+    builder route them to the docs storage instead of the partitioned data
+    layout, which requires ``year``.
+
+    Args:
+        file (dict): File metadata produced by :func:`list_files`.
+        dataset (str): Dataset the documentation belongs to.
+
+    Returns:
+        dict: The file metadata enriched with dataset/group/is_doc.
+    """
+    return file | {
+        "dataset": dataset,
+        "group": dataset,
+        "year": None,
+        "ext": file["extension"],
+        "is_doc": True,
+    }
+
+
 # -----------------------------------------------------------------------------
 # ---------------------------------- CAGED ------------------------------------
 # -----------------------------------------------------------------------------
@@ -231,21 +255,11 @@ def list_caged_docs() -> Generator[dict, None, None]:
     for file in list_files(docs["caged"]["dir_path"]):
         if not re.match(docs["caged"]["fn_pattern"], file["name"]):
             continue
-        yield file | {
-            "dataset": "caged",
-            "group": "caged",
-            "year": None,
-            "ext": file["extension"],
-        }
+        yield _doc_entry(file, "caged")
     for file in list_files(docs["caged-ajustes"]["dir_path"]):
         if not re.match(docs["caged-ajustes"]["fn_pattern"], file["name"]):
             continue
-        yield file | {
-            "dataset": "caged-ajustes",
-            "group": "caged-ajustes",
-            "year": None,
-            "ext": file["extension"],
-        }
+        yield _doc_entry(file, "caged-ajustes")
 
 
 def list_caged_2020() -> Generator[dict, None, None]:
@@ -267,12 +281,7 @@ def list_caged_2020_docs() -> Generator[dict, None, None]:
     for file in list_files(docs["caged-2020"]["dir_path"]):
         if not re.match(docs["caged-2020"]["fn_pattern"], file["name"]):
             continue
-        yield file | {
-            "dataset": "caged-2020",
-            "group": "caged-2020",
-            "year": None,
-            "ext": file["extension"],
-        }
+        yield _doc_entry(file, "caged-2020")
 
 
 # -----------------------------------------------------------------------------
@@ -295,16 +304,10 @@ def list_rais_docs() -> Generator[dict, None, None]:
         dict: File metadata for RAIS documentation files.
     """
     for file in list_files(docs["rais-vinculos"]["dir_path"]):
-        yield file | {
-            "dataset": "rais-vinculos",
-            "group": "rais-vinculos",
-            "year": None,
-            "ext": file["extension"],
-        }
+        if file["size"] is None or file["extension"] is None:
+            continue
+        yield _doc_entry(file, "rais-vinculos")
     for file in list_files(docs["rais-estabelecimentos"]["dir_path"]):
-        yield file | {
-            "dataset": "rais-estabelecimentos",
-            "group": "rais-estabelecimentos",
-            "year": None,
-            "ext": file["extension"],
-        }
+        if file["size"] is None or file["extension"] is None:
+            continue
+        yield _doc_entry(file, "rais-estabelecimentos")

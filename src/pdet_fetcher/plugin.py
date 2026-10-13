@@ -10,9 +10,10 @@ from pathlib import Path
 from typing import Annotated, Any
 
 import typer
-from quantilica.cli.sdk import FetcherApp
+from quantilica.cli.sdk import CheckPlanItem, FetcherApp
 from quantilica.cli.ui import get_console, setup_rich_logging
 from quantilica.core.ftp import FtpClient
+from quantilica.core.manifests import manifest_sidecar_path
 from rich.rule import Rule
 
 from pdet_fetcher import (
@@ -32,6 +33,7 @@ from pdet_fetcher.storage import (
     get_rais_filepath,
 )
 
+from . import logger
 from .fetch import FTP_HOST
 
 _DEFAULT_OUTPUT = Path("/data/pdet")
@@ -78,9 +80,9 @@ def pdet_path_builder(
     # A base is the target dir
     dataset = entry.get("dataset")
 
-    # We figure out if it's docs or data based on the path.
-    # Actually, we can use the original storage functions.
-    is_doc = "/_documentacao/" in entry.get("url", "")
+    # Documentação é marcada na listagem (``is_doc``); o teste pela URL
+    # fica como compatibilidade com entries antigas.
+    is_doc = bool(entry.get("is_doc")) or "/_documentacao/" in entry.get("url", "")
 
     if dataset == "caged" or dataset == "caged-ajustes":
         if is_doc:
@@ -111,6 +113,146 @@ fetcher = FetcherApp(
 )
 
 app = fetcher.app
+
+
+def _entry_to_plan_dict(entry: dict[str, Any]) -> dict[str, Any]:
+    """Return a JSON-serializable copy of a dataset entry.
+
+    PDET entries carry ``datetime`` stamps from the FTP LIST parsing, which
+    ``CheckPlan.to_json`` cannot serialize. They are converted to tagged
+    dicts that :func:`_entry_from_plan_dict` restores.
+
+    Args:
+        entry (dict): The dataset entry produced by ``pdet_list_datasets``.
+
+    Returns:
+        dict[str, Any]: A JSON-serializable copy of the entry.
+    """
+    return _to_jsonable(entry)
+
+
+def _to_jsonable(obj: Any) -> Any:
+    """Recursively convert rich PDET values to JSON-safe structures.
+
+    Args:
+        obj (Any): Value to convert.
+
+    Returns:
+        Any: JSON-serializable representation of the value.
+    """
+    if isinstance(obj, dt.datetime):
+        return {"__datetime__": True, "value": obj.isoformat()}
+    if isinstance(obj, dt.date):
+        return {"__date__": True, "value": obj.isoformat()}
+    if isinstance(obj, dict):
+        return {key: _to_jsonable(value) for key, value in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_to_jsonable(value) for value in obj]
+    return obj
+
+
+def _entry_from_plan_dict(data: dict[str, Any]) -> dict[str, Any]:
+    """Restore a dataset entry deserialized from a check plan.
+
+    Inverse of :func:`_entry_to_plan_dict`: tagged dicts become ``datetime``
+    objects again so the entry works with the path builder and the download
+    path.
+
+    Args:
+        data (dict[str, Any]): The entry payload stored in the plan.
+
+    Returns:
+        dict[str, Any]: The rehydrated dataset entry.
+    """
+    return _from_jsonable(data)
+
+
+def _from_jsonable(obj: Any) -> Any:
+    """Recursive counterpart of :func:`_to_jsonable`.
+
+    Args:
+        obj (Any): Value to restore.
+
+    Returns:
+        Any: Value with ``datetime`` objects rebuilt.
+    """
+    if isinstance(obj, dict):
+        if obj.get("__datetime__"):
+            return dt.datetime.fromisoformat(obj["value"])
+        if obj.get("__date__"):
+            return dt.date.fromisoformat(obj["value"])
+        return {key: _from_jsonable(value) for key, value in obj.items()}
+    if isinstance(obj, list):
+        return [_from_jsonable(value) for value in obj]
+    return obj
+
+
+def _pdet_check_entry(entry: dict[str, Any], output_dir: Path) -> CheckPlanItem:
+    """Build a freshness verdict for one PDET entry without downloading.
+
+    The generic SDK probe uses HTTP ``HEAD``, which ``FtpClient`` does not
+    implement, so freshness here uses the metadata already obtained from the
+    FTP LIST (size and modification timestamp) plus an honest local
+    heuristic: an entry whose stamped local file (or its ephemeral
+    ``.manifest.json`` sidecar) already exists is ``skip-up-to-date``,
+    otherwise ``download``. There is no per-file round-trip (no HEAD, no
+    MDTM). The stored entry is serialized via :func:`_entry_to_plan_dict` so
+    ``check --json`` round-trips through ``sync --from-plan``.
+
+    Args:
+        entry (dict): Dataset entry from ``pdet_list_datasets``.
+        output_dir (Path): Destination directory used for path computation.
+
+    Returns:
+        CheckPlanItem: The freshness verdict for the entry.
+    """
+    dataset = str(
+        entry.get("group") or entry.get("dataset") or entry.get("id") or "datasets"
+    )
+    eid = str(entry.get("id", "unknown"))
+    partition = entry.get("partition")
+    try:
+        local = pdet_path_builder(output_dir, entry, None)
+    except Exception as exc:
+        reason = f"path-error: {type(exc).__name__}: {exc}"
+        logger.warning("Entrada %s sem caminho local (%s)", eid, reason)
+        return CheckPlanItem(
+            dataset=dataset,
+            id=eid,
+            url=str(entry.get("url", "")),
+            partition=partition if isinstance(partition, str) else None,
+            local_path="",
+            remote_etag=None,
+            remote_last_modified=None,
+            remote_size=None,
+            local_exists=False,
+            action="download",
+            reason=reason,
+            entry=_entry_to_plan_dict(entry),
+        )
+    exists = local.exists() or manifest_sidecar_path(local).exists()
+    modified = entry.get("datetime")
+    size = entry.get("size")
+    return CheckPlanItem(
+        dataset=dataset,
+        id=eid,
+        url=str(entry.get("url", "")),
+        partition=partition if isinstance(partition, str) else None,
+        local_path=str(local),
+        remote_etag=None,
+        remote_last_modified=(
+            modified.isoformat() if isinstance(modified, dt.datetime) else None
+        ),
+        remote_size=size if isinstance(size, int) else None,
+        local_exists=exists,
+        action="skip-up-to-date" if exists else "download",
+        reason="local-exists" if exists else "not-present",
+        entry=_entry_to_plan_dict(entry),
+    )
+
+
+fetcher.check_entry = _pdet_check_entry  # type: ignore[method-assign]
+fetcher.entry_from_plan = _entry_from_plan_dict  # type: ignore[method-assign]
 
 # Datasets reconhecidos pelo extrator de colunas.
 _DATASETS = {

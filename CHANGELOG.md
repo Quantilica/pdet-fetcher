@@ -7,6 +7,14 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+### Corrigido
+- Listagem do Novo CAGED (`caged-2020-*`): `_list_variation_files` agora desce no
+  diretório `<ano>/<anomês>/` (até 2 níveis de diretórios de data) para alcançar os
+  arquivos `CAGEDEXC/CAGEDFOR/CAGEDMOV`; antes a listagem parava no diretório do ano
+  e nenhum arquivo do Novo CAGED era coletado. `plugin.pdet_path_builder` também
+  passa a rotear as entradas `caged-2020-{exc,for,mov}` para `get_caged_2020_filepath`
+  (antes caíam no caminho de fallback).
+
 ### Alterado
 - `cli.py` protege o import do plugin; sem o host a CLI standalone sai com código 1 e orienta `quantilica install pdet`.
 - `reader.decompress` agora delega a descompressão de arquivos brutos para `quantilica.core.files.decompress_archive`, eliminando invocação direta de subprocesso `7z`.

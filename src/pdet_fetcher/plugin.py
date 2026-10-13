@@ -88,7 +88,7 @@ def pdet_path_builder(
         if is_doc:
             return get_caged_docs_filepath(entry, output_dir)
         return get_caged_filepath(entry, output_dir)
-    elif dataset == "caged-2020":
+    elif dataset is not None and dataset.startswith("caged-2020"):
         if is_doc:
             return get_caged_2020_docs_filepath(entry, output_dir)
         return get_caged_2020_filepath(entry, output_dir)

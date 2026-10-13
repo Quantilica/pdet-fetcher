@@ -146,18 +146,90 @@ def _get_date_dirs(
 
     date_dirs = []
     for f in fi:
-        if f["size"] is not None:
-            continue
-        for pattern, groups in zip(patterns, groups_list, strict=False):
-            m = re.match(pattern, f["name"])
-            if m:
-                group_meta = {"dir": f["name"]}
-                for i, group in enumerate(groups):
-                    text = m.groups()[i]
-                    group_meta.update({group: text})
-                date_dirs.append(group_meta)
-                break
+        dir_meta = _match_date_dir(f, patterns, groups_list)
+        if dir_meta is not None:
+            date_dirs.append(dir_meta)
     return date_dirs
+
+
+def _match_date_dir(
+    f: dict,
+    patterns: Sequence[str],
+    groups_list: Sequence[Sequence[str]],
+) -> dict | None:
+    """Matches a FTP entry against the date dir patterns.
+
+    Args:
+        f (dict): FTP file metadata produced by ``list_files``.
+        patterns (Sequence[str]): Directory name regex patterns.
+        groups_list (Sequence[Sequence[str]]): Group names for each pattern.
+
+    Returns:
+        dict | None: Directory metadata (``dir`` plus captured groups) or
+        ``None`` when the entry is a file or matches none of the patterns.
+    """
+    if f["size"] is not None:
+        return None
+    for pattern, groups in zip(patterns, groups_list, strict=False):
+        m = re.match(pattern, f["name"])
+        if m:
+            dir_meta = {"dir": f["name"]}
+            for i, group in enumerate(groups):
+                dir_meta.update({group: m.groups()[i]})
+            return dir_meta
+    return None
+
+
+_MAX_DATE_DIR_DEPTH = 2
+
+
+def _list_date_dir_files(
+    ftp_path: str,
+    dir_path: str,
+    dir_meta: dict,
+    variation: dict,
+    depth: int,
+) -> Generator[dict, None, None]:
+    """Lists (possibly nested) files inside a date directory.
+
+    Some PDET datasets (e.g. NOVO CAGED) nest files two levels deep
+    (``<year>/<yearmonth>/file.7z``), while others store files directly in
+    the year directory. Child directories matching a date pattern are
+    descended, up to ``_MAX_DATE_DIR_DEPTH`` levels, and their captured
+    groups (e.g. ``year``/``month``) are merged into the file metadata.
+
+    Args:
+        ftp_path (str): Dataset base path on the FTP server.
+        dir_path (str): Absolute FTP path of the current date directory.
+        dir_meta (dict): Metadata matched for the current date directory.
+        variation (dict): Dataset variation being listed.
+        depth (int): Current nesting depth (1 for the top-level date dirs).
+
+    Yields:
+        dict: File metadata enriched with the date directory groups.
+    """
+    if isinstance(variation["dir_pattern"], str):
+        patterns = [variation["dir_pattern"]]
+        groups_list = [variation["dir_pattern_groups"]]
+    else:
+        patterns = variation["dir_pattern"]
+        groups_list = variation["dir_pattern_groups"]
+
+    files = list_files(dir_path)
+    for f in files:
+        if depth < _MAX_DATE_DIR_DEPTH:
+            child_meta = _match_date_dir(f, patterns, groups_list)
+            if child_meta is not None:
+                child_path = f"{dir_path}/{child_meta['dir']}"
+                yield from _list_date_dir_files(
+                    ftp_path=ftp_path,
+                    dir_path=child_path,
+                    dir_meta=dir_meta | child_meta,
+                    variation=variation,
+                    depth=depth + 1,
+                )
+                continue
+        yield f | dir_meta
 
 
 def _get_group_meta(m: re.Match, variation: dict) -> dict:
@@ -183,9 +255,13 @@ def _list_variation_files(variation: dict) -> Generator[dict, None, None]:
             dir_pattern_groups=variation["dir_pattern_groups"],
         )
         for date_dir_meta in date_dirs:
-            date_dir = date_dir_meta["dir"]
-            files = list_files(f"{ftp_path}/{date_dir}")
-            yield from (f | date_dir_meta for f in files)
+            yield from _list_date_dir_files(
+                ftp_path=ftp_path,
+                dir_path=f"{ftp_path}/{date_dir_meta['dir']}",
+                dir_meta=date_dir_meta,
+                variation=variation,
+                depth=1,
+            )
     else:
         files = list_files(ftp_path)
         yield from (f | {"year": None, "group": variation["group"]} for f in files)

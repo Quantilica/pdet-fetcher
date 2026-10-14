@@ -8,7 +8,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Não lançado]
 
 ### Corrigido
-- `plugin.py`: a dica de instalação do extra `analysis` mandava `pip install pdet-fetcher[analysis]`, que não funciona para fetchers do Fluxo B (fora do PyPI), e o Rich engolia o `[analysis]` por tratá-lo como marcação, deixando só `pip install pdet-fetcher`. Agora a mensagem é `uv add 'pdet-fetcher[analysis]' --index https://index.quantilica.com/simple/`, forma que a norma `cli-fetchers` exige.
+- `plugin.py`: a dica de instalação do extra `analysis` mandava `pip install pdet-fetcher[analysis]`, que não funciona para fetchers do Fluxo B (fora do PyPI), e o Rich ainda engolia o `[analysis]` por tratá-lo como marcação, deixando só `pip install pdet-fetcher`. Agora a mensagem é `quantilica install pdet --extra analysis`.
 - Listagem do Novo CAGED (`caged-2020-*`): `_list_variation_files` agora desce no
   diretório `<ano>/<anomês>/` (até 2 níveis de diretórios de data) para alcançar os
   arquivos `CAGEDEXC/CAGEDFOR/CAGEDMOV`; antes a listagem parava no diretório do ano

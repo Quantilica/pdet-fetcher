@@ -316,8 +316,7 @@ def cmd_convert(
     except ImportError:
         console.print(
             "[red]Erro:[/red] convert requer extras de análise: "
-            r"uv add 'pdet-fetcher\[analysis]' "
-            "--index https://index.quantilica.com/simple/"
+            "quantilica install pdet --extra analysis"
         )
         raise typer.Exit(1) from None
 
@@ -367,8 +366,7 @@ def cmd_columns(
     except ImportError:
         console.print(
             "[red]Erro:[/red] columns requer extras de análise: "
-            r"uv add 'pdet-fetcher\[analysis]' "
-            "--index https://index.quantilica.com/simple/"
+            "quantilica install pdet --extra analysis"
         )
         raise typer.Exit(1) from None
 
@@ -451,8 +449,7 @@ def cmd_pipeline(
         except ImportError:
             console.print(
                 "[red]Erro:[/red] pipeline (conversão) requer extras de análise: "
-                r"uv add 'pdet-fetcher\[analysis]' "
-                "--index https://index.quantilica.com/simple/"
+                "quantilica install pdet --extra analysis"
             )
             raise typer.Exit(1) from None
 

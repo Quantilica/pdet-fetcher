@@ -17,6 +17,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
   (antes caíam no caminho de fallback).
 
 ### Alterado
+- `README.md`: a seção de instalação deixa de mandar `pip install` (fetchers do Fluxo B não estão no PyPI) e passa a mostrar `quantilica install pdet` (com `--extra analysis`) e `uv add --index` para uso como biblioteca.
 - `cli.py` protege o import do plugin; sem o host a CLI standalone sai com código 1 e orienta `quantilica install pdet`.
 - `reader.decompress` agora delega a descompressão de arquivos brutos para `quantilica.core.files.decompress_archive`, eliminando invocação direta de subprocesso `7z`.
 - Remoção de instância estática global de `FtpClient` no escopo do módulo `fetch.py`.

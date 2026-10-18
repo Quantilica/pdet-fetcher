@@ -68,7 +68,9 @@ def convert_rais(data_dir: Path, dest_dir: Path) -> None:
                     shutil.rmtree(decompressed["tmp_dir"])
                 data = pl.concat(frames, how="vertical")
 
-            reader.write_parquet(data, dest_filepath)
+            # Com várias UFs não há bruto único: só herda proveniência de 1 arquivo.
+            source = files[0]["filepath"] if len(files) == 1 else None
+            reader.write_parquet(data, dest_filepath, source_path=source)
 
 
 def convert_caged(data_dir: Path, dest_dir: Path) -> None:
@@ -101,7 +103,6 @@ def convert_caged(data_dir: Path, dest_dir: Path) -> None:
         date = file_metadata["date"]
         name = file_metadata["name"]
         dataset = file_metadata["dataset"]
-        file_metadata["filepath"]
 
         dest_filepath = dest_dir / dataset / f"{name}.parquet"
         if dest_filepath.exists():
@@ -119,7 +120,9 @@ def convert_caged(data_dir: Path, dest_dir: Path) -> None:
                 date=date,
                 dataset=dataset,
             )
-            reader.write_parquet(df, dest_filepath)
+            reader.write_parquet(
+                df, dest_filepath, source_path=file_metadata["filepath"]
+            )
         except pl.exceptions.ComputeError as e:
             logger.error("Error converting %s: %s", decompressed_filepath, e)
         except pl.exceptions.ShapeError as e:

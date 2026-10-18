@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 import polars as pl
+from quantilica.analytics.writer import to_parquet
 from quantilica.core.exceptions import StorageError
 from quantilica.core.files import decompress_archive
 
@@ -212,20 +213,26 @@ def read_caged(
     return df
 
 
-def write_parquet(df: pl.DataFrame, filepath: Path) -> Path:
+def write_parquet(
+    df: pl.DataFrame,
+    filepath: Path,
+    source_path: Path | None = None,
+    compression: str = "zstd",
+) -> Path:
     """Writes a DataFrame to a Parquet file.
 
     Args:
         df (pl.DataFrame): The DataFrame to write.
         filepath (Path): The destination file path.
+        source_path (Path | None): Raw archive whose ``.manifest.json`` sidecar
+            provides the ``quantilica.*`` provenance. Defaults to None.
+        compression (str): Parquet compression. Defaults to "zstd".
 
     Returns:
         Path: The file path where the Parquet file was written.
     """
     logger.info("Writing data to %s", filepath)
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-    df.write_parquet(filepath)
-    return filepath
+    return to_parquet(df, filepath, source_path=source_path, compression=compression)
 
 
 def decompress(file_metadata: dict[str, Any]) -> dict[str, Path]:

@@ -118,3 +118,23 @@ class TestColumnSchemaResolution:
         dummy.write_text("col\n1\n")
         with pytest.raises(ValueError, match="Unknown CAGED dataset"):
             read_caged(dummy, date=202001, dataset="unknown-dataset")
+
+
+def test_write_parquet_herda_proveniencia(tmp_path):
+    import polars as pl
+    import pyarrow.parquet as pq
+    from quantilica.core.manifests import DownloadManifest, write_manifest_sidecar
+
+    from pdet_fetcher.reader import write_parquet
+
+    raw = tmp_path / "raw.7z"
+    raw.write_bytes(b"x")
+    write_manifest_sidecar(
+        raw,
+        DownloadManifest.from_content(
+            source_id="pdet", dataset_id="rais", url="http://x", content=b"x"
+        ),
+    )
+    out = write_parquet(pl.DataFrame({"a": [1]}), tmp_path / "o.parquet", raw)
+    meta = pq.ParquetFile(out).metadata.metadata
+    assert meta[b"quantilica.dataset_id"] == b"rais"

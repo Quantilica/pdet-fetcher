@@ -5,6 +5,38 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.6.0] - 2026-10-19
+
+### Corrigido
+- RAIS Vínculos: as republicações de 2026 no FTP da PDET (2023, 2024 e 2025) mudaram
+  de formato: separador `,`, decimal com ponto, campos entre aspas, 62 colunas e outra
+  ordem nas faixas das posições 14 a 16 (`Faixa Rem Média (SM)`, `Faixa Hora Contrat`,
+  `Faixa Rem Dez (SM)`). Com o mapeamento por posição, `read_rais` falhava no polars 2
+  (60 nomes para 62 colunas); num polars que aceitasse, a conversão numérica lia o
+  ponto decimal como separador de milhar (2.956,01 virava 295.601) e as três faixas
+  ficavam com os nomes trocados.
+- `convert_columns_dtypes` ganha `decimal_separator` (`","` por padrão, o comportamento
+  anterior; `"."` para o formato novo); `read_rais` escolhe pelo separador do arquivo.
+
+### Adicionado
+- `read_rais(dataset="vinculos")` nomeia as colunas pelo cabeçalho do arquivo
+  (`RAIS_VINCULOS_HEADER_NAMES`, `normalize_header`, `resolve_rais_vinculos_columns`),
+  e não mais pela posição do layout do ano. O mapa cobre os 17 layouts de 1985 a 2025
+  e reproduz exatamente os nomes posicionais anteriores em todos os layouts antigos
+  (teste com um cabeçalho real de cada layout em `tests/data/`). Cabeçalho
+  desconhecido ou dois cabeçalhos com o mesmo nome canônico levantam `ParseError`.
+- Colunas novas do formato de 2026: `indicador_vinculo_abandonado` (booleana) e
+  `categoria_trabalhador`; incluídas em `sql/rais_vinculos.sql`.
+- `write_parquet` grava com `quantilica.analytics.writer.to_parquet` e herda a
+  proveniência `quantilica.*` do manifesto do arquivo bruto quando há um só.
+
+### Alterado
+- Pisos de dependência: `quantilica-core>=0.12.0` e, no extra `analysis`,
+  `quantilica-analytics>=0.4.0`.
+- RAIS Estabelecimentos continua nomeada por posição; o formato de 2026 desse dataset
+  não foi conferido. Como em Vínculos, arquivo separado por `,` passa a ser lido com
+  ponto decimal.
+
 ## [0.5.5] - 2026-10-14
 
 ### Corrigido

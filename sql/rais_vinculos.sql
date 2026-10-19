@@ -64,7 +64,9 @@ CREATE TABLE IF NOT EXISTS pdet.rais_vinculos (
     tipo_estabelecimento TEXT,
     bairros_rj TEXT,
     valor_remuneracao_maio NUMERIC,
-    valor_remuneracao_media NUMERIC
+    valor_remuneracao_media NUMERIC,
+    indicador_vinculo_abandonado BOOLEAN,
+    categoria_trabalhador TEXT
 ) PARTITION BY RANGE (ano);
 
 

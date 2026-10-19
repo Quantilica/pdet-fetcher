@@ -1,12 +1,15 @@
+import collections
+import csv
 import logging
 import re
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 import polars as pl
 from quantilica.analytics.writer import to_parquet
-from quantilica.core.exceptions import StorageError
+from quantilica.core.exceptions import ParseError, StorageError
 from quantilica.core.files import decompress_archive
 
 from .constants import (
@@ -21,7 +24,7 @@ from .constants import (
     NUMERIC_COLUMNS,
     RAGGED_CSV_FILES,
     RAIS_ESTABELECIMENTOS_COLUMNS,
-    RAIS_VINCULOS_COLUMNS,
+    RAIS_VINCULOS_HEADER_NAMES,
 )
 
 logger = logging.getLogger(__name__)
@@ -56,31 +59,43 @@ def parse_filename(f: Path) -> dict[str, str | int | None]:
     }
 
 
-def convert_columns_dtypes(df: pl.DataFrame) -> pl.DataFrame:
+def convert_columns_dtypes(
+    df: pl.DataFrame, decimal_separator: str = ","
+) -> pl.DataFrame:
     """Converts the datatypes of columns in a DataFrame based on predefined constants.
 
     Args:
         df (pl.DataFrame): The input DataFrame.
+        decimal_separator (str): "," for the legacy PDET format (decimal comma,
+            "." as thousands separator) or "." for the 2026 format (decimal
+            point, no thousands separator). Defaults to ",".
 
     Returns:
         pl.DataFrame: A DataFrame with the converted datatypes.
+
+    Raises:
+        ValueError: If ``decimal_separator`` is neither "," nor ".".
     """
+    if decimal_separator not in (",", "."):
+        raise ValueError(f"Unsupported decimal separator: {decimal_separator!r}")
     for column in df.columns:
         if column in INTEGER_COLUMNS:
-            df = df.with_columns(
-                pl.col(column)
-                .str.replace(r" +", "")
-                .str.replace(r"\.", "")
-                .cast(pl.Int64)
-            )
+            if decimal_separator == ",":
+                expr = pl.col(column).str.replace(r" +", "").str.replace(r"\.", "")
+            else:
+                expr = pl.col(column).str.strip_chars()
+            df = df.with_columns(expr.cast(pl.Int64))
         elif column in NUMERIC_COLUMNS:
-            df = df.with_columns(
-                pl.col(column)
-                .str.replace(r" +", "")
-                .str.replace(r"\.", "")
-                .str.replace(",", ".")
-                .cast(pl.Float64)
-            )
+            if decimal_separator == ",":
+                expr = (
+                    pl.col(column)
+                    .str.replace(r" +", "")
+                    .str.replace(r"\.", "")
+                    .str.replace(",", ".")
+                )
+            else:
+                expr = pl.col(column).str.strip_chars()
+            df = df.with_columns(expr.cast(pl.Float64))
         elif column in BOOLEAN_COLUMNS:
             df = df.with_columns(pl.col(column).cast(pl.Int8).cast(pl.Boolean))
         else:  # Categorical
@@ -123,8 +138,73 @@ def _resolve_columns(schema_dict: dict[int, tuple], date_key: int) -> tuple:
     return columns_names
 
 
+_CODE_SUFFIX = re.compile(r"\s*-\s*c[oó]digo$")
+
+
+def normalize_header(header: str) -> str:
+    """Normalizes a PDET column header for lookup in the header maps.
+
+    Strips the " - Código" suffix of the 2026 format, collapses whitespace and
+    casefolds, so "CNAE 2.0 Subclasse - Codigo" and "CNAE 2.0 Subclasse" match.
+
+    Args:
+        header (str): The column header as written in the file.
+
+    Returns:
+        str: The normalized header.
+    """
+    text = " ".join(header.split()).casefold()
+    return _CODE_SUFFIX.sub("", text)
+
+
+def resolve_rais_vinculos_columns(header: Sequence[str]) -> list[str]:
+    """Maps the header of a RAIS Vínculos file to canonical column names.
+
+    Args:
+        header (Sequence[str]): The column headers, in file order.
+
+    Returns:
+        list[str]: The canonical column names, in file order.
+
+    Raises:
+        ParseError: If a header is unknown, or if two columns would get the
+            same canonical name.
+    """
+    names: list[str] = []
+    unknown: list[str] = []
+    occurrences: collections.Counter[str] = collections.Counter()
+    for column in header:
+        key = normalize_header(column)
+        target = RAIS_VINCULOS_HEADER_NAMES.get(key)
+        if isinstance(target, tuple):
+            index = occurrences[key]
+            occurrences[key] += 1
+            target = target[index] if index < len(target) else None
+        if target is None:
+            unknown.append(column)
+            continue
+        names.append(target)
+    if unknown:
+        raise ParseError(f"Unknown RAIS vinculos column(s): {unknown}")
+    duplicated = [name for name, n in collections.Counter(names).items() if n > 1]
+    if duplicated:
+        raise ParseError(f"RAIS vinculos columns map to the same name: {duplicated}")
+    return names
+
+
+def _read_header(filepath: Path, separator: str, encoding: str) -> list[str]:
+    with open(filepath, encoding=encoding, newline="") as f:
+        return next(csv.reader(f, delimiter=separator))
+
+
 def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.DataFrame:
     """Reads a RAIS dataset from a CSV file into a Polars DataFrame.
+
+    Vínculos columns are named from the file header (see
+    ``RAIS_VINCULOS_HEADER_NAMES``), so any layout from 1985 on is read by
+    column name; Estabelecimentos columns are still named by position for the
+    given year. Files separated by "," (the 2026 PDET format) use a decimal
+    point; files separated by ";" use a decimal comma.
 
     Args:
         filepath (Path): The path to the CSV file.
@@ -138,15 +218,17 @@ def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.Da
 
     Raises:
         ValueError: If an unknown RAIS dataset is provided.
+        ParseError: If a Vínculos header cannot be mapped.
     """
-    if dataset == "vinculos":
-        columns_names = _resolve_columns(RAIS_VINCULOS_COLUMNS, year)
-    elif dataset == "estabelecimentos":
-        columns_names = _resolve_columns(RAIS_ESTABELECIMENTOS_COLUMNS, year)
-    else:
+    if dataset not in ("vinculos", "estabelecimentos"):
         raise ValueError(f"Unknown RAIS dataset: {dataset!r}")
     logger.info("Reading %s from %s", dataset, filepath)
     separator = _sniff_separator(filepath, encoding="latin1")
+    if dataset == "vinculos":
+        header = _read_header(filepath, separator, encoding="latin1")
+        columns_names = resolve_rais_vinculos_columns(header)
+    else:
+        columns_names = _resolve_columns(RAIS_ESTABELECIMENTOS_COLUMNS, year)
     df = pl.read_csv(
         filepath,
         has_header=True,
@@ -157,7 +239,7 @@ def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.Da
         infer_schema_length=0,
         **read_csv_args,
     )
-    df = convert_columns_dtypes(df)
+    df = convert_columns_dtypes(df, decimal_separator="." if separator == "," else ",")
     return df
 
 

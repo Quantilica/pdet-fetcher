@@ -3,7 +3,14 @@ import logging
 import shutil
 from pathlib import Path
 
-import polars as pl
+try:
+    import polars as pl
+except ImportError as exc:
+    raise ImportError(
+        "pdet_fetcher.wrangling requer o extra 'analysis': "
+        "uv add 'pdet-fetcher[analysis]' "
+        "--index https://index.quantilica.com/simple/"
+    ) from exc
 
 from . import reader
 

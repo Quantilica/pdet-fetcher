@@ -7,8 +7,15 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
-import polars as pl
-from quantilica.analytics.writer import to_parquet
+try:
+    import polars as pl
+    from quantilica.analytics.writer import to_parquet
+except ImportError as exc:
+    raise ImportError(
+        "pdet_fetcher.reader requer o extra 'analysis': "
+        "uv add 'pdet-fetcher[analysis]' "
+        "--index https://index.quantilica.com/simple/"
+    ) from exc
 from quantilica.core.exceptions import ParseError, StorageError
 from quantilica.core.files import decompress_archive
 

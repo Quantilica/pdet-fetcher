@@ -5,6 +5,15 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.6.1] - 2026-10-20
+
+### Corrigido
+- `reader.py` e `wrangling.py`: sem o extra `analysis`, importar esses módulos
+  levantava `ModuleNotFoundError` cru de `polars` ou `quantilica.analytics`. Agora
+  falham com `ImportError` acionável orientando o extra
+  (`uv add 'pdet-fetcher[analysis]' --index https://index.quantilica.com/simple/`),
+  no padrão do `anp-fetcher`.
+
 ## [0.6.0] - 2026-10-19
 
 ### Corrigido

@@ -53,13 +53,14 @@ DECLARE
     partition_name TEXT;
 BEGIN
     FOR current_year IN start_year..end_year LOOP
-        partition_name := 'pdet.rais_estabelecimentos_' || current_year;
+        partition_name := 'rais_estabelecimentos_' || current_year;
         EXECUTE format(
-            'CREATE TABLE IF NOT EXISTS %I PARTITION OF pdet.rais_estabelecimentos FOR VALUES FROM (%L) TO (%L)',
+            'CREATE TABLE IF NOT EXISTS %I.%I PARTITION OF pdet.rais_estabelecimentos FOR VALUES FROM (%L) TO (%L)',
+            'pdet',
             partition_name,
             current_year,
             current_year + 1
         );
-        RAISE NOTICE 'Created partition: %', partition_name;
+        RAISE NOTICE 'Created partition: pdet.%', partition_name;
     END LOOP;
 END$$;

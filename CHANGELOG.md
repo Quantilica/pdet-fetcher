@@ -5,6 +5,50 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.7.0] - 2026-10-21
+
+### Alterado
+- Novo CAGED (`caged-2020-mov`, `-for`, `-exc`): a coluna `seção` (seção da CNAE 2.0,
+  uma letra) passa a se chamar `cnae_2_secao`; antes saía como `cnae_2`, nome que no
+  CAGED e na RAIS é a classe da CNAE 2.0 (5 dígitos). Quem lia `cnae_2` do Novo CAGED
+  precisa trocar o nome.
+- Colunas indicadoras (`BOOLEAN_COLUMNS`): `"0"` → `False`, `"1"` → `True`, `"9"`
+  (não identificado) → nulo; qualquer outro código levanta `ParseError`. Antes, todo
+  código diferente de zero virava `True`, inclusive o `9` que o Novo CAGED publica em
+  `indicador_trabalho_parcial` e `indicador_trabalho_intermitente`, o CAGED ajustes em
+  `indicador_aprendiz` e `indicador_portador_deficiencia` e a RAIS Vínculos em
+  `indicador_cei_vinculado` e `indicador_simples`.
+
+### Corrigido
+- Novo CAGED: `indicador_aprendiz` tinha um espaço no fim do nome
+  (`"indicador_aprendiz "`), não era reconhecido como booleano e chegava como texto.
+- Novo CAGED: `valor_salario_fixo` passa a numérico (decimal com vírgula, como
+  `salario_mensal`); `competencia_declarada` e `competencia_exclusao` passam a inteiro
+  (AAAAMM), como `competencia_movimentacao`. `competencia_declarada` do CAGED ajustes
+  também passa a inteiro.
+
+### Adicionado
+- `read_caged` e `read_rais(dataset="estabelecimentos")` nomeiam as colunas pelo
+  cabeçalho do arquivo, como `read_rais(dataset="vinculos")` desde a 0.6.0
+  (`CAGED_HEADER_NAMES`, `CAGED_AJUSTES_HEADER_NAMES`, `NOVO_CAGED_HEADER_NAMES`,
+  `RAIS_ESTABELECIMENTOS_HEADER_NAMES`, `RAIS_ESTABELECIMENTOS_1985_2001_HEADER_NAMES`;
+  `resolve_columns`, `resolve_caged_columns`, `resolve_rais_estabelecimentos_columns`).
+  Os mapas cobrem os 24 layouts publicados no FTP da PDET em 2026-10-21 (561 arquivos:
+  CAGED 2007-2019, CAGED ajustes 2002-2019, Novo CAGED 2020-2026 e RAIS
+  Estabelecimentos 1985-2025) e reproduzem os nomes posicionais anteriores em todos
+  eles, salvo as duas mudanças do Novo CAGED acima (teste com um cabeçalho real de cada
+  layout em `tests/data/pdet_headers.tsv`). Cabeçalho desconhecido ou nome canônico
+  repetido levanta `ParseError`.
+- RAIS Estabelecimentos: "UF" é a sigla (`sigla_uf`) nos arquivos de 1985 a 2001, de
+  cabeçalhos em maiúsculas, e o código (`id_uf`) de 2002 em diante; o estilo do
+  cabeçalho escolhe o mapa.
+- `read_caged` detecta o separador como `read_rais` (`","` → ponto decimal).
+- `normalize_header` remove o BOM.
+
+As constantes posicionais (`CAGED_COLUMNS`, `CAGED_2020_*_COLUMNS`,
+`RAIS_ESTABELECIMENTOS_COLUMNS` etc.) continuam exportadas, mas os leitores não as usam
+mais.
+
 ## [0.6.1] - 2026-10-20
 
 ### Corrigido

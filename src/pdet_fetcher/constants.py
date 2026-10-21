@@ -1475,6 +1475,180 @@ RAIS_VINCULOS_HEADER_NAMES: dict[str, str | tuple[str, ...]] = {
     "vl rem média nom": "valor_remuneracao_media",
 }
 
+# Nome canônico de cada coluna do CAGED (2007-2019) a partir do cabeçalho do
+# arquivo, como em RAIS_VINCULOS_HEADER_NAMES. Reproduz os nomes de
+# CAGED_COLUMNS nos dois layouts publicados (200701-201804, 40 colunas;
+# 201805-201912, 42), conferidos nos 156 arquivos do FTP em 2026-10-21. No
+# CAGED, "Competência Declarada" e "Ano Declarado" são a competência e o ano da
+# movimentação.
+CAGED_HEADER_NAMES: dict[str, str | tuple[str, ...]] = {
+    "admitidos/desligados": "admitidos_desligados",
+    "competência declarada": "competencia_movimentacao",
+    "município": "id_municipio_6",
+    "ano declarado": "ano_movimentacao",
+    "cbo 2002 ocupação": "cbo_2002_ocupacao",
+    "cnae 1.0 classe": "cnae_1",
+    "cnae 2.0 classe": "cnae_2",
+    "cnae 2.0 subclas": "cnae_2_subclasse",
+    "faixa empr início jan": "tamanho_estabelecimento_janeiro",
+    "grau instrução": "grau_instrucao",
+    "qtd hora contrat": "quantidade_horas_contratadas",
+    "ibge subsetor": "subsetor_ibge",
+    "idade": "idade",
+    "ind aprendiz": "indicador_aprendiz",
+    "ind portador defic": "indicador_portador_deficiencia",
+    "raça cor": "raca_cor",
+    "salário mensal": "salario_mensal",
+    "saldo mov": "saldo_movimento",
+    "sexo": "sexo",
+    "tempo emprego": "tempo_emprego",
+    "tipo estab": "tipo_estab",
+    "tipo defic": "tipo_defic",
+    "tipo mov desagregado": "tipo_mov_desagregado",
+    "uf": "id_uf",
+    "bairros sp": "bairros_sp",
+    "bairros fortaleza": "bairros_fortaleza",
+    "bairros rj": "bairros_rj",
+    "distritos sp": "distritos_sp",
+    "regiões adm df": "regioes_adm_df",
+    "mesorregião": "id_mesorregiao",
+    "microrregião": "id_microrregiao",
+    "região adm rj": "regiao_adm_rj",
+    "região adm sp": "regiao_adm_sp",
+    "região corede": "regiao_corede",
+    "região corede 04": "regiao_corede_04",
+    "região gov sp": "regiao_gov_sp",
+    "região senac pr": "regiao_senac_pr",
+    "região senai pr": "regiao_senai_pr",
+    "região senai sp": "regiao_senai_sp",
+    "sub-região senai pr": "subregiao_senai_pr",
+    "ind trab parcial": "indicador_trabalho_parcial",
+    "ind trab intermitente": "indicador_trabalho_intermitente",
+}
+
+# CAGED ajustes (declarações fora do prazo, 2002-2019): mesmos cabeçalhos do
+# CAGED, com os nomes de CAGED_AJUSTES_COLUMNS nos quatro layouts publicados
+# (2002-2005, 2006, 2007-201804 e 201805-201912; 128 arquivos). Aqui
+# "Competência Declarada" é a competência da declaração, e a da movimentação
+# vem em "Competência Movimentação".
+CAGED_AJUSTES_HEADER_NAMES: dict[str, str | tuple[str, ...]] = {
+    name: target
+    for name, target in CAGED_HEADER_NAMES.items()
+    if name not in ("cnae 2.0 classe", "ano declarado")
+} | {
+    "competência movimentação": "competencia_movimentacao",
+    "ano movimentação": "ano_movimentacao",
+    "competência declarada": "competencia_declarada",
+    "cbo 94 ocupação": "cbo_1994_ocupacao",
+    "tipo estab": "tipo_estabelecimento",
+    "tipo defic": "tipo_deficiencia",
+    "tipo mov desagregado": "tipo_movimento_desagregado",
+    "região metro mte": "regiao_metropolitana_mte",
+}
+
+# Novo CAGED (2020 em diante): movimentações (CAGEDMOV), declarações fora do
+# prazo (CAGEDFOR) e exclusões (CAGEDEXC) têm o mesmo vocabulário de
+# cabeçalhos; um layout por arquivo, conferido nos 236 arquivos do FTP em
+# 2026-10-21. Difere de CAGED_2020_*_COLUMNS em dois nomes: "seção" é a seção
+# da CNAE 2.0 (uma letra) e passa a "cnae_2_secao", não "cnae_2"; e
+# "indicador_aprendiz" perde o espaço final que o impedia de ser booleano.
+NOVO_CAGED_HEADER_NAMES: dict[str, str | tuple[str, ...]] = {
+    "competênciamov": "competencia_movimentacao",
+    "região": "regiao",
+    "uf": "id_uf",
+    "município": "id_municipio_6",
+    "seção": "cnae_2_secao",
+    "subclasse": "cnae_2_subclasse",
+    "saldomovimentação": "saldo_movimento",
+    "cbo2002ocupação": "cbo_2002_ocupacao",
+    "categoria": "categoria",
+    "graudeinstrução": "grau_instrucao",
+    "idade": "idade",
+    "horascontratuais": "quantidade_horas_semanais_contratadas",
+    "raçacor": "raca_cor",
+    "sexo": "sexo",
+    "tipoempregador": "tipo_empregador",
+    "tipoestabelecimento": "tipo_estabelecimento",
+    "tipomovimentação": "tipo_movimentacao",
+    "tipodedeficiência": "tipo_deficiencia",
+    "indtrabintermitente": "indicador_trabalho_intermitente",
+    "indtrabparcial": "indicador_trabalho_parcial",
+    "salário": "salario_mensal",
+    "tamestabjan": "tamanho_estabelecimento_janeiro",
+    "indicadoraprendiz": "indicador_aprendiz",
+    "origemdainformação": "origem_informacao",
+    "competênciadec": "competencia_declarada",
+    "competênciaexc": "competencia_exclusao",
+    "indicadordeexclusão": "indicador_exclusao",
+    "indicadordeforadoprazo": "indicador_fora_prazo",
+    "unidadesaláriocódigo": "unidade_salario",
+    "valorsaláriofixo": "valor_salario_fixo",
+}
+
+# RAIS Estabelecimentos, arquivos de 1985 a 2001: cabeçalhos abreviados, todos
+# em maiúsculas. "UF" traz a sigla ("RO"), e não o código.
+RAIS_ESTABELECIMENTOS_1985_2001_HEADER_NAMES: dict[str, str | tuple[str, ...]] = {
+    "bairr sp": "bairros_sp",
+    "bairro fort": "bairros_fortaleza",
+    "bairro rj": "bairros_rj",
+    "clas cnae 95": "cnae_1",
+    "distrito sp": "distritos_sp",
+    "est clt out": "quantidade_vinculos_clt",
+    "estoque": "quantidade_vinculos_ativos",
+    "estoque esta": "quantidade_vinculos_estatutarios",
+    "ind cei vinc": "indicador_cei_vinculado",
+    "ind pat": "indicador_pat",
+    "ind rais neg": "indicador_rais_negativa",
+    "ind simples": "indicador_simples",
+    "municipio": "id_municipio_6",
+    "nat estb": "natureza",
+    "nat jurid": "natureza_juridica",
+    "reg adm df": "regioes_administrativas_df",
+    "tamestab": "tamanho",
+    "tipo ident": "tipo",
+    "tipo estb": "tipo",
+    "tipo estbl": "tipo",
+    "uf": "sigla_uf",
+    "subs ibge": "subsetor_ibge",
+    "subativ ibge": "subatividade_ibge",
+}
+
+# RAIS Estabelecimentos, de 2002 em diante, nos dois formatos (até as versões
+# publicadas em 2025 e as republicações de 2026, com " - Código" no
+# cabeçalho). "UF" traz o código. Até 2022, "Tipo Estab" vem duas vezes,
+# primeiro o código e depois a descrição. Com o mapa de 1985-2001, reproduz os
+# nomes de RAIS_ESTABELECIMENTOS_COLUMNS nos 15 layouts publicados (41
+# arquivos, conferidos em 2026-10-21).
+RAIS_ESTABELECIMENTOS_HEADER_NAMES: dict[str, str | tuple[str, ...]] = {
+    "bairros sp": "bairros_sp",
+    "bairros fortaleza": "bairros_fortaleza",
+    "bairros rj": "bairros_rj",
+    "cnae 95 classe": "cnae_1",
+    "cnae 2.0 classe": "cnae_2",
+    "cnae 2.0 subclasse": "cnae_2_subclasse",
+    "distritos sp": "distritos_sp",
+    "qtd vínculos clt": "quantidade_vinculos_clt",
+    "qtd vínculos ativos": "quantidade_vinculos_ativos",
+    "qtd vínculos estatutários": "quantidade_vinculos_estatutarios",
+    "ind atividade ano": "indicador_atividade_ano",
+    "ind cei vinculado": "indicador_cei_vinculado",
+    "ind estab participa pat": "indicador_pat",
+    "ind estab participante pat": "indicador_pat",
+    "ind rais negativa": "indicador_rais_negativa",
+    "ind simples": "indicador_simples",
+    "ind estab participante simples": "indicador_simples",
+    "município": "id_municipio_6",
+    "natureza jurídica": "natureza_juridica",
+    "regiões adm df": "regioes_administrativas_df",
+    "região adm df": "regioes_administrativas_df",
+    "tamanho estabelecimento": "tamanho",
+    "tipo estab": ("tipo", "tipo_desc"),
+    "tipo estabelecimento": "tipo",
+    "uf": "id_uf",
+    "ibge subsetor": "subsetor_ibge",
+    "cep estab": "cep",
+}
+
 INTEGER_COLUMNS = (
     "quantidade_horas_contratadas",
     "idade",
@@ -1488,6 +1662,8 @@ INTEGER_COLUMNS = (
     "saldo_movimento",
     "ano_movimentacao",
     "competencia_movimentacao",
+    "competencia_declarada",
+    "competencia_exclusao",
 )
 NUMERIC_COLUMNS = (
     "valor_remuneracao_dezembro",
@@ -1508,6 +1684,7 @@ NUMERIC_COLUMNS = (
     "valor_remuneracao_novembro",
     "quantidade_horas_semanais_contratadas",
     "salario_mensal",
+    "valor_salario_fixo",
 )
 BOOLEAN_COLUMNS = (
     "vinculo_ativo_3112",
@@ -1521,6 +1698,11 @@ BOOLEAN_COLUMNS = (
     "indicador_fora_prazo",
     "indicador_aprendiz",
 )
+# Codes accepted in the indicator columns: "0" (não), "1" (sim) and "9" (não
+# identificado, read as null). Novo CAGED (trabalho parcial e intermitente),
+# CAGED ajustes (aprendiz, portador de deficiência) and RAIS Vínculos (CEI
+# vinculado, Simples) publish "9".
+BOOLEAN_CODES = ("0", "1", "9")
 
 NA_VALUES = (
     "{ñ class}",

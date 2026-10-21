@@ -20,19 +20,28 @@ from quantilica.core.exceptions import ParseError, StorageError
 from quantilica.core.files import decompress_archive
 
 from .constants import (
+    BOOLEAN_CODES,
     BOOLEAN_COLUMNS,
-    CAGED_2020_EXC_COLUMNS,
-    CAGED_2020_FOR_COLUMNS,
-    CAGED_2020_MOV_COLUMNS,
-    CAGED_AJUSTES_COLUMNS,
-    CAGED_COLUMNS,
+    CAGED_AJUSTES_HEADER_NAMES,
+    CAGED_HEADER_NAMES,
     INTEGER_COLUMNS,
     NA_VALUES,
+    NOVO_CAGED_HEADER_NAMES,
     NUMERIC_COLUMNS,
     RAGGED_CSV_FILES,
-    RAIS_ESTABELECIMENTOS_COLUMNS,
+    RAIS_ESTABELECIMENTOS_1985_2001_HEADER_NAMES,
+    RAIS_ESTABELECIMENTOS_HEADER_NAMES,
     RAIS_VINCULOS_HEADER_NAMES,
 )
+
+# Encoding and header map of each CAGED dataset.
+_CAGED_FORMATS: dict[str, tuple[str, dict[str, str | tuple[str, ...]]]] = {
+    "caged": ("latin-1", CAGED_HEADER_NAMES),
+    "caged-ajustes": ("latin-1", CAGED_AJUSTES_HEADER_NAMES),
+    "caged-2020-exc": ("utf-8", NOVO_CAGED_HEADER_NAMES),
+    "caged-2020-for": ("utf-8", NOVO_CAGED_HEADER_NAMES),
+    "caged-2020-mov": ("utf-8", NOVO_CAGED_HEADER_NAMES),
+}
 
 logger = logging.getLogger(__name__)
 
@@ -104,10 +113,42 @@ def convert_columns_dtypes(
                 expr = pl.col(column).str.strip_chars()
             df = df.with_columns(expr.cast(pl.Float64))
         elif column in BOOLEAN_COLUMNS:
-            df = df.with_columns(pl.col(column).cast(pl.Int8).cast(pl.Boolean))
+            df = df.with_columns(_boolean_expr(df, column))
         else:  # Categorical
             df = df.with_columns(pl.col(column).str.strip_chars().cast(pl.Categorical))
     return df
+
+
+def _boolean_expr(df: pl.DataFrame, column: str) -> pl.Expr:
+    """Converts a PDET indicator column ("0"/"1") to Boolean.
+
+    "9" is the PDET code for "não identificado" and becomes null; it used to
+    become True, like any other non-zero code. Any other value raises.
+
+    Raises:
+        ParseError: If the column has a value other than "0", "1" or "9".
+    """
+    values = pl.col(column).cast(pl.Utf8).str.strip_chars()
+    unexpected = (
+        df.select(values.alias("v"))
+        .filter(pl.col("v").is_not_null() & ~pl.col("v").is_in(BOOLEAN_CODES))
+        .get_column("v")
+        .unique()
+    )
+    if unexpected.len():
+        raise ParseError(
+            f"Unexpected value(s) in indicator column {column!r}: "
+            f"{sorted(unexpected.to_list())[:10]}"
+        )
+    return (
+        pl.when(values == "1")
+        .then(True)
+        .when(values == "0")
+        .then(False)
+        .otherwise(None)
+        .cast(pl.Boolean)
+        .alias(column)
+    )
 
 
 def _fix_ragged_csv(filepath: Path, encoding: str) -> Path:
@@ -160,8 +201,51 @@ def normalize_header(header: str) -> str:
     Returns:
         str: The normalized header.
     """
-    text = " ".join(header.split()).casefold()
+    text = " ".join(header.replace("\ufeff", "").split()).casefold()
     return _CODE_SUFFIX.sub("", text)
+
+
+def resolve_columns(
+    header: Sequence[str],
+    header_names: dict[str, str | tuple[str, ...]],
+    label: str,
+) -> list[str]:
+    """Maps a file header to canonical column names with a header map.
+
+    Args:
+        header (Sequence[str]): The column headers, in file order.
+        header_names (dict): Normalized header (see ``normalize_header``) to
+            canonical name; a tuple value names repeated headers in the order
+            they appear.
+        label (str): Dataset name used in error messages.
+
+    Returns:
+        list[str]: The canonical column names, in file order.
+
+    Raises:
+        ParseError: If a header is unknown, or if two columns would get the
+            same canonical name.
+    """
+    names: list[str] = []
+    unknown: list[str] = []
+    occurrences: collections.Counter[str] = collections.Counter()
+    for column in header:
+        key = normalize_header(column)
+        target = header_names.get(key)
+        if isinstance(target, tuple):
+            index = occurrences[key]
+            occurrences[key] += 1
+            target = target[index] if index < len(target) else None
+        if target is None:
+            unknown.append(column)
+            continue
+        names.append(target)
+    if unknown:
+        raise ParseError(f"Unknown {label} column(s): {unknown}")
+    duplicated = [name for name, n in collections.Counter(names).items() if n > 1]
+    if duplicated:
+        raise ParseError(f"{label} columns map to the same name: {duplicated}")
+    return names
 
 
 def resolve_rais_vinculos_columns(header: Sequence[str]) -> list[str]:
@@ -177,26 +261,53 @@ def resolve_rais_vinculos_columns(header: Sequence[str]) -> list[str]:
         ParseError: If a header is unknown, or if two columns would get the
             same canonical name.
     """
-    names: list[str] = []
-    unknown: list[str] = []
-    occurrences: collections.Counter[str] = collections.Counter()
-    for column in header:
-        key = normalize_header(column)
-        target = RAIS_VINCULOS_HEADER_NAMES.get(key)
-        if isinstance(target, tuple):
-            index = occurrences[key]
-            occurrences[key] += 1
-            target = target[index] if index < len(target) else None
-        if target is None:
-            unknown.append(column)
-            continue
-        names.append(target)
-    if unknown:
-        raise ParseError(f"Unknown RAIS vinculos column(s): {unknown}")
-    duplicated = [name for name, n in collections.Counter(names).items() if n > 1]
-    if duplicated:
-        raise ParseError(f"RAIS vinculos columns map to the same name: {duplicated}")
-    return names
+    return resolve_columns(header, RAIS_VINCULOS_HEADER_NAMES, "RAIS vinculos")
+
+
+def resolve_rais_estabelecimentos_columns(header: Sequence[str]) -> list[str]:
+    """Maps the header of a RAIS Estabelecimentos file to canonical names.
+
+    The 1985-2001 files have abbreviated, all-uppercase headers whose "UF" is
+    the state abbreviation (``sigla_uf``); from 2002 on, "UF" is the state
+    code (``id_uf``). The header style picks the map.
+
+    Args:
+        header (Sequence[str]): The column headers, in file order.
+
+    Returns:
+        list[str]: The canonical column names, in file order.
+
+    Raises:
+        ParseError: If a header is unknown, or if two columns would get the
+            same canonical name.
+    """
+    if all(column == column.upper() for column in header):
+        header_names = RAIS_ESTABELECIMENTOS_1985_2001_HEADER_NAMES
+    else:
+        header_names = RAIS_ESTABELECIMENTOS_HEADER_NAMES
+    return resolve_columns(header, header_names, "RAIS estabelecimentos")
+
+
+def resolve_caged_columns(header: Sequence[str], dataset: str) -> list[str]:
+    """Maps the header of a CAGED or Novo CAGED file to canonical names.
+
+    Args:
+        header (Sequence[str]): The column headers, in file order.
+        dataset (str): ``caged``, ``caged-ajustes``, ``caged-2020-mov``,
+            ``caged-2020-for`` or ``caged-2020-exc``.
+
+    Returns:
+        list[str]: The canonical column names, in file order.
+
+    Raises:
+        ValueError: If an unknown CAGED dataset is provided.
+        ParseError: If a header is unknown, or if two columns would get the
+            same canonical name.
+    """
+    if dataset not in _CAGED_FORMATS:
+        raise ValueError(f"Unknown CAGED dataset: {dataset!r}")
+    _, header_names = _CAGED_FORMATS[dataset]
+    return resolve_columns(header, header_names, dataset)
 
 
 def _read_header(filepath: Path, separator: str, encoding: str) -> list[str]:
@@ -207,15 +318,15 @@ def _read_header(filepath: Path, separator: str, encoding: str) -> list[str]:
 def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.DataFrame:
     """Reads a RAIS dataset from a CSV file into a Polars DataFrame.
 
-    Vínculos columns are named from the file header (see
-    ``RAIS_VINCULOS_HEADER_NAMES``), so any layout from 1985 on is read by
-    column name; Estabelecimentos columns are still named by position for the
-    given year. Files separated by "," (the 2026 PDET format) use a decimal
-    point; files separated by ";" use a decimal comma.
+    Columns are named from the file header (see ``RAIS_VINCULOS_HEADER_NAMES``
+    and ``RAIS_ESTABELECIMENTOS_HEADER_NAMES``), so any layout from 1985 on is
+    read by column name. Files separated by "," (the 2026 PDET format) use a
+    decimal point; files separated by ";" use a decimal comma.
 
     Args:
         filepath (Path): The path to the CSV file.
-        year (int): The year of the dataset.
+        year (int): The year of the dataset (not used to name the columns;
+            kept for compatibility).
         dataset (str): The specific RAIS dataset to read ('vinculos' or
             'estabelecimentos').
         **read_csv_args: Additional keyword arguments for polars.read_csv.
@@ -225,17 +336,17 @@ def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.Da
 
     Raises:
         ValueError: If an unknown RAIS dataset is provided.
-        ParseError: If a Vínculos header cannot be mapped.
+        ParseError: If a header cannot be mapped.
     """
     if dataset not in ("vinculos", "estabelecimentos"):
         raise ValueError(f"Unknown RAIS dataset: {dataset!r}")
     logger.info("Reading %s from %s", dataset, filepath)
     separator = _sniff_separator(filepath, encoding="latin1")
+    header = _read_header(filepath, separator, encoding="latin1")
     if dataset == "vinculos":
-        header = _read_header(filepath, separator, encoding="latin1")
         columns_names = resolve_rais_vinculos_columns(header)
     else:
-        columns_names = _resolve_columns(RAIS_ESTABELECIMENTOS_COLUMNS, year)
+        columns_names = resolve_rais_estabelecimentos_columns(header)
     df = pl.read_csv(
         filepath,
         has_header=True,
@@ -255,9 +366,14 @@ def read_caged(
 ) -> pl.DataFrame:
     """Reads a CAGED dataset from a CSV file into a Polars DataFrame.
 
+    Columns are named from the file header (``CAGED_HEADER_NAMES``,
+    ``CAGED_AJUSTES_HEADER_NAMES`` and ``NOVO_CAGED_HEADER_NAMES``), not by
+    position.
+
     Args:
         filepath (Path): The path to the CSV file.
-        date (int): The date (usually year-month format) of the dataset.
+        date (int): The date (usually year-month format) of the dataset (not
+            used to name the columns; kept for compatibility).
         dataset (str): The specific CAGED dataset to read.
         **read_csv_args: Additional keyword arguments for polars.read_csv.
 
@@ -266,39 +382,29 @@ def read_caged(
 
     Raises:
         ValueError: If an unknown CAGED dataset is provided.
+        ParseError: If a header cannot be mapped.
     """
-    if dataset == "caged":
-        encoding = "latin-1"
-        columns_names = _resolve_columns(CAGED_COLUMNS, date)
-    elif dataset == "caged-ajustes":
-        encoding = "latin-1"
-        columns_names = _resolve_columns(CAGED_AJUSTES_COLUMNS, date)
-    elif dataset == "caged-2020-exc":
-        encoding = "utf-8"
-        columns_names = _resolve_columns(CAGED_2020_EXC_COLUMNS, date)
-    elif dataset == "caged-2020-for":
-        encoding = "utf-8"
-        columns_names = _resolve_columns(CAGED_2020_FOR_COLUMNS, date)
-    elif dataset == "caged-2020-mov":
-        encoding = "utf-8"
-        columns_names = _resolve_columns(CAGED_2020_MOV_COLUMNS, date)
-    else:
+    if dataset not in _CAGED_FORMATS:
         raise ValueError(f"Unknown CAGED dataset: {dataset!r}")
+    encoding, _ = _CAGED_FORMATS[dataset]
 
     logger.info("Reading %s from %s", dataset, filepath)
     if filepath.name in RAGGED_CSV_FILES:
         filepath = _fix_ragged_csv(filepath, encoding)
+    separator = _sniff_separator(filepath, encoding=encoding)
+    header = _read_header(filepath, separator, encoding=encoding)
+    columns_names = resolve_caged_columns(header, dataset)
     df = pl.read_csv(
         filepath,
         has_header=True,
         new_columns=columns_names,
-        separator=";",
+        separator=separator,
         encoding=encoding,
         null_values=NA_VALUES,
         infer_schema_length=0,
         **read_csv_args,
     )
-    df = convert_columns_dtypes(df)
+    df = convert_columns_dtypes(df, decimal_separator="." if separator == "," else ",")
     return df
 
 

@@ -5,6 +5,24 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.8.0] - 2026-10-26
+
+### Alterado
+- **Incompatível:** `convert` deixa de gravar um `.parquet` por ano ao lado dos arquivos baixados e passa a escrever num lake de Parquet particionado no estilo Hive: `<lake>/pdet/<dataset>/<chave>=<valor>/<arquivo>.parquet`. Não há modo de layout antigo; reconverta os arquivos baixados no novo layout. As partições vêm do nome do arquivo (ou da pasta) e não são gravadas dentro do Parquet:
+  - `rais-vinculos`: `ano` e `regiao` (`rais-vinculos_2025-sul` → `ano=2025/regiao=sul`; sem região, `regiao=__HIVE_DEFAULT_PARTITION__`);
+  - `rais-estabelecimentos`: `ano`;
+  - `caged`, `caged-ajustes`, `caged-2020-mov`, `caged-2020-for` e `caged-2020-exc`: `ano` e `mes` (`caged_201901` → `ano=2019/mes=01`; arquivos anuais, como `caged-ajustes_2002`, ficam em `mes=__HIVE_DEFAULT_PARTITION__`).
+- **Incompatível:** `convert` e `pipeline` passam a usar os comandos padrão do ecossistema. `convert` recebe `-i/--input` (diretório dos arquivos baixados), `--lake` (raiz do lake, com `-o/--output` como sinônimo; padrão `QUANTILICA_LAKE_DIR`), `--dataset` (repetível) e `--force`. `pipeline` ganha `--lake` (`--parquet-dir` segue aceito). O relatório final mostra arquivos convertidos, pulados e com erro, e o comando sai com código 1 se houver erro. Sem o extra `analysis`, `convert` e `pipeline` saem com código 1 e a dica de instalação.
+- As colunas do lake são gravadas como texto, com nomes normalizados. Nas republicações de 2026 da RAIS (Vínculos e Estabelecimentos), o sufixo `- Código` dos cabeçalhos é removido (`municipio_codigo` → `municipio`), para que os anos tenham os mesmos nomes.
+
+### Adicionado
+- `pdet_fetcher.lake` (requer o extra `analysis`): `converter.convert(input_dir, lake_dir, datasets=None, force=False)` devolve as contagens `converted` e `skipped` e a lista `errors`. A leitura é em streaming (DuckDB), com suporte a `.7z` e `.zip`.
+- Idempotência por `sha256`: um arquivo já presente no lake com o mesmo `sha256` é pulado. Quando o PDET republica um arquivo (mesmo nome, outra data `@AAAAMMDD`), só a versão mais recente é convertida e ela substitui o Parquet anterior em vez de acumular arquivos.
+- Arquivos sem as colunas obrigatórias (por exemplo, uma página HTML de erro salva como CSV) e arquivos compactados corrompidos são recusados e listados no relatório, sem interromper os demais.
+- Ponto de entrada `quantilica.lake` (`pdet`), para ferramentas localizarem o conversor sem importar o pacote.
+- Cada dataset do lake ganha um `_dataset.json` com o descritor (partições e tipos), e cada Parquet leva os metadados de proveniência (`quantilica.*`).
+- O lake lê o Novo CAGED como UTF-8 (como `read_caged`) e os demais datasets como latin-1; a RAIS é lida com `;` e, se o cabeçalho não bater, com `,` (formato de 2026).
+
 ## [0.7.0] - 2026-10-21
 
 ### Alterado

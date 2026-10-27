@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import subprocess
 import sys
 import types
 
@@ -84,3 +85,55 @@ def test_importerror_interno_do_plugin_propaga() -> None:
         else:
             sys.modules[_PLUGIN_KEY] = saved
         importlib.reload(cli_module)
+
+
+_BLOCK_EXTRAS = (
+    "import sys\n"
+    "for name in ('polars', 'duckdb', 'pyarrow', 'quantilica.analytics'):\n"
+    "    sys.modules[name] = None\n"
+)
+
+
+def _run(code: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "-I", "-c", _BLOCK_EXTRAS + code],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_plugin_importa_sem_extras_e_sem_carregar_o_lake() -> None:
+    """O plugin não exige o extra analysis: o lake só é importado sob demanda."""
+    proc = _run(
+        "import pdet_fetcher.plugin as plugin\n"
+        "assert 'pdet_fetcher.lake' not in sys.modules\n"
+        "names = {c.name for c in plugin.app.registered_commands}\n"
+        "assert {'convert', 'pipeline', 'sync', 'check'} <= names, names\n"
+    )
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_lake_sem_extras_levanta_importerror_acionavel() -> None:
+    """Sem o extra, importar o lake diz como instalá-lo."""
+    proc = _run(
+        "try:\n"
+        "    import pdet_fetcher.lake\n"
+        "except ImportError as exc:\n"
+        '    assert "pdet-fetcher[analysis]" in str(exc), exc\n'
+        "else:\n"
+        "    raise SystemExit('ImportError esperado')\n"
+    )
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_convert_sem_extras_sai_1_com_dica(tmp_path) -> None:
+    """``convert`` sem o extra sai com código 1 e a dica de instalação."""
+    proc = _run(
+        "from typer.testing import CliRunner\n"
+        "from pdet_fetcher.plugin import app\n"
+        f"result = CliRunner().invoke(app, ['convert', '-i', {str(tmp_path)!r},"
+        f" '--lake', {str(tmp_path / 'lake')!r}])\n"
+        "assert result.exit_code == 1, (result.exit_code, result.output)\n"
+        "assert '--extra analysis' in result.output, result.output\n"
+    )
+    assert proc.returncode == 0, proc.stderr

@@ -1,6 +1,6 @@
 [project]
 name = "pdet-fetcher"
-version = "0.7.0"
+version = "0.8.0"
 description = "Collect microdata from PDET (CAGED, RAIS)"
 readme = "README.md"
 authors = [
@@ -49,6 +49,9 @@ pdet-fetcher = "pdet_fetcher.cli:main"
 
 [project.entry-points."quantilica.fetchers"]
 pdet = "pdet_fetcher.plugin:app"
+
+[project.entry-points."quantilica.lake"]
+pdet = "pdet_fetcher.lake:converter"
 
 [dependency-groups]
 dev = [

@@ -14,7 +14,6 @@ from quantilica.cli.sdk import CheckPlanItem, FetcherApp
 from quantilica.cli.ui import get_console, setup_rich_logging
 from quantilica.core.ftp import FtpClient
 from quantilica.core.manifests import manifest_sidecar_path
-from rich.rule import Rule
 
 from pdet_fetcher import (
     list_caged,
@@ -284,45 +283,25 @@ _DATASETS = {
 }
 
 
-@app.command("convert")
-def cmd_convert(
-    input: Annotated[
-        Path,
-        typer.Option("-i", "--input", help="Diretório de origem com arquivos brutos"),
-    ],
-    output: Annotated[
-        Path,
-        typer.Option("-o", "--output", help="Diretório de destino para Parquet"),
-    ] = _DEFAULT_OUTPUT,
-    verbose: Annotated[bool, typer.Option("--verbose", help="Logs detalhados")] = False,
-) -> None:
-    """Converter arquivos brutos para Parquet.
+def convert(
+    input_dir: Path,
+    lake_dir: Path,
+    *,
+    dataset: list[str] | None = None,
+    force: bool = False,
+) -> Any:
+    """Convert the raw microdata under ``input_dir`` into the lake at ``lake_dir``.
 
-    Args:
-        input (Path): Diretório de origem com arquivos brutos.
-        output (Path, optional): Diretório de destino para Parquet.
-            Defaults to _DEFAULT_OUTPUT.
-        verbose (bool, optional): Exibir logs detalhados. Defaults to False.
-
-    Raises:
-        typer.Exit: If required dependencies are missing.
+    The lake module needs the ``analysis`` extra, so it is imported on demand;
+    the ``ImportError`` is handled by the ``convert`` and ``pipeline`` commands.
     """
-    setup_rich_logging(verbose, console=console)
-    try:
-        from pdet_fetcher import convert_caged, convert_rais
+    from pdet_fetcher import lake
 
-        if convert_rais is None or convert_caged is None:
-            raise ImportError
-    except ImportError:
-        console.print(
-            "[red]Erro:[/red] convert requer extras de análise: "
-            "quantilica install pdet --extra analysis"
-        )
-        raise typer.Exit(1) from None
+    return lake.converter.convert(input_dir, lake_dir, datasets=dataset, force=force)
 
-    convert_rais(input, output)
-    convert_caged(input, output)
-    console.print("[green]✓[/green] Conversão concluída.")
+
+fetcher.command_convert(convert)
+fetcher.command_pipeline(convert)
 
 
 @app.command("columns")
@@ -380,82 +359,3 @@ def cmd_columns(
         has_uf=cfg["has_uf"],
     )
     console.print(f"[green]✓[/green] Colunas salvas em [bold]{output_file}[/bold]")
-
-
-@app.command("pipeline")
-def cmd_pipeline(
-    datasets: Annotated[
-        list[str] | None,
-        typer.Argument(
-            help="Datasets (rais, caged, caged-2020). Omitir para todos.",
-        ),
-    ] = None,
-    output: Annotated[
-        Path,
-        typer.Option("-o", "--output", help="Diretório de dados brutos"),
-    ] = _DEFAULT_OUTPUT,
-    parquet_dir: Annotated[
-        Path | None,
-        typer.Option(
-            "--parquet-dir",
-            help="Diretório para os Parquet (padrão: igual a --output)",
-        ),
-    ] = None,
-    workers: Annotated[
-        int, typer.Option("--workers", help="Número de downloads paralelos")
-    ] = 4,
-    verbose: Annotated[bool, typer.Option("--verbose", help="Logs detalhados")] = False,
-) -> None:
-    """Pipeline completo do PDET (sync → convert).
-
-    Args:
-        datasets (list[str] | None, optional): Datasets to process.
-            Defaults to None.
-        output (Path, optional): Diretório de dados brutos. Defaults to
-            _DEFAULT_OUTPUT.
-        parquet_dir (Path | None, optional): Diretório para os Parquet.
-            Defaults to None.
-        workers (int, optional): Número de downloads paralelos. Defaults
-            to 4.
-        verbose (bool, optional): Exibir logs detalhados. Defaults to False.
-
-    Raises:
-        typer.Exit: If a dataset is unknown, dependencies are missing, or user cancels.
-    """
-    setup_rich_logging(verbose, console=console)
-    targets = datasets if datasets else list(GROUPS.keys())
-    invalid = [d for d in targets if d not in GROUPS]
-    if invalid:
-        console.print(
-            f"[red]Erro:[/red] dataset(s) desconhecido(s): {', '.join(invalid)}"
-        )
-        raise typer.Exit(1)
-    parquet_out = parquet_dir or output
-
-    try:
-        console.print(Rule("[bold]Passo 1/2: Download[/bold]"))
-        entries = [e for g in targets for e in fetcher.list_datasets(g)]
-
-        fetcher.download_datasets(entries, output, workers=workers)
-
-        console.print("[green]✓[/green] Download concluído.")
-
-        console.print(Rule("[bold]Passo 2/2: Conversão[/bold]"))
-        try:
-            from pdet_fetcher import convert_caged, convert_rais
-
-            if convert_caged is None or convert_rais is None:
-                raise ImportError
-        except ImportError:
-            console.print(
-                "[red]Erro:[/red] pipeline (conversão) requer extras de análise: "
-                "quantilica install pdet --extra analysis"
-            )
-            raise typer.Exit(1) from None
-
-        convert_rais(output, parquet_out)
-        convert_caged(output, parquet_out)
-        console.print(f"[green]✓[/green] Parquet salvo em [dim]{parquet_out}[/dim]")
-    except KeyboardInterrupt as err:
-        console.print("[yellow]Pipeline cancelado pelo usuário.[/yellow]")
-        raise typer.Exit(code=130) from err

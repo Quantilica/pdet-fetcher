@@ -49,7 +49,7 @@ Pela CLI unificada (recomendado):
 
 ```bash
 quantilica install pdet
-# com o extra de análise (comandos convert e pipeline):
+# com o extra de análise (conversão para o lake Parquet):
 quantilica install pdet --extra analysis
 ```
 
@@ -61,7 +61,7 @@ uv add pdet-fetcher --index https://index.quantilica.com/simple/
 uv add 'pdet-fetcher[analysis]' --index https://index.quantilica.com/simple/
 ```
 
-**Requisitos**: Python 3.12+ e `7z` no PATH (usado por `convert_*` para extrair os arquivos baixados).
+**Requisitos**: Python 3.12+ e `7z` no PATH (usado pela conversão para extrair os arquivos `.7z` baixados).
 
 ---
 
@@ -76,14 +76,82 @@ Subcommands:
   sync     [DATASETS...] [-o DIR]   Sincroniza RAIS e CAGED (dados + docs). Sem
                                     DATASETS, baixa rais, caged e caged-2020.
   list     [-o DIR]                 Lista no FTP o que ainda falta baixar
-  convert  -i DATA_DIR [-o DIR]     Descompacta e converte CSVs em Parquet
+  convert  -i DATA_DIR [--lake DIR] [--dataset NOME]... [--force]
+                                    Converte os arquivos baixados para o lake Parquet
   columns  DATASET -i DATA_DIR [-o OUT_DIR]
                                     Extrai os nomes de colunas de cada arquivo
-  pipeline [DATASETS...] [-o DIR] [--parquet-dir DIR]
+  pipeline [DATASETS...] [-o DIR] [--lake DIR]
                                     Pipeline completo: sync -> convert
 ```
 
 `DATASET` em `columns` aceita: `rais-vinculos`, `rais-estabelecimentos`, `caged`, `caged-ajustes`, `caged-2020`.
+
+---
+
+## Converter para o lake Parquet
+
+`convert` lê os arquivos baixados (`.7z` ou `.zip`) e grava um lake de Parquet particionado no estilo Hive, que DuckDB, Polars, PyArrow e Spark leem sem código adicional. Requer o extra `analysis`; sem ele, o comando sai com código 1 e mostra como instalar.
+
+```bash
+# converte tudo o que está em ./dados para o lake em ./lake
+pdet-fetcher convert -i ./dados --lake ./lake
+
+# só alguns datasets, ignorando o que já foi convertido
+pdet-fetcher convert -i ./dados --lake ./lake --dataset caged --dataset rais-vinculos
+
+# baixa e converte de uma vez
+pdet-fetcher pipeline rais -o ./dados --lake ./lake
+```
+
+Sem `--lake`, o destino é a variável de ambiente `QUANTILICA_LAKE_DIR`. `-o/--output` é aceito como sinônimo de `--lake`, e `--parquet-dir` no `pipeline`.
+
+### Layout
+
+```text
+<lake>/pdet/<dataset>/
+  _dataset.json                              # descritor: partições, tipos e versão do conversor
+  ano=2025/regiao=sul/rais-vinculos_2025-sul.parquet
+  ano=2024/regiao=__HIVE_DEFAULT_PARTITION__/rais-vinculos_2024.parquet
+  ano=2019/mes=01/caged_201901.parquet
+```
+
+| Dataset | Partições | Origem da partição |
+|---|---|---|
+| `rais-vinculos` | `ano`, `regiao` | nome do arquivo (`rais-vinculos_2025-sul`); sem região, `__HIVE_DEFAULT_PARTITION__` |
+| `rais-estabelecimentos` | `ano` | nome do arquivo (`rais-estabelecimentos_2024`) |
+| `caged`, `caged-ajustes`, `caged-2020-mov`, `caged-2020-for`, `caged-2020-exc` | `ano`, `mes` | nome do arquivo ou pasta (`caged_201901`, `2020/202001/...`); arquivos anuais ficam em `mes=__HIVE_DEFAULT_PARTITION__` |
+
+- A partição vem do nome do arquivo, nunca das linhas, e não é gravada dentro do Parquet. Os tipos (`ano` inteiro, demais textos) ficam em `_dataset.json`.
+- As colunas são gravadas como texto, com nomes normalizados (minúsculas, sem acento). Nas republicações de 2026 da RAIS, o sufixo `- Código` dos cabeçalhos é removido (`municipio_codigo` vira `municipio`), para que os anos tenham os mesmos nomes.
+- Cada Parquet leva a origem nos metadados (`quantilica.*`, incluindo o `sha256` do arquivo baixado).
+- **Idempotência**: um arquivo cujo `sha256` já está no lake é pulado; `--force` reconverte. Quando o PDET republica um arquivo (mesmo nome, outra data `@AAAAMMDD`), só a versão mais recente é convertida e ela substitui o Parquet anterior, sem acumular arquivos.
+- Arquivos que não são dados (uma página HTML de erro salva como CSV, um arquivo corrompido) são recusados e listados no relatório final; os demais seguem, e o comando sai com código 1.
+- O Novo CAGED é lido como UTF-8; os demais datasets, como latin-1. A RAIS é lida com `;` e, se o cabeçalho não bater, com `,` (formato de 2026).
+
+> **Mudança de versão 0.8.0**: `convert` deixou de gravar um `.parquet` por ano ao lado dos brutos e passou a gravar o lake acima, com as opções `-i/--input`, `--lake`, `--dataset` e `--force`. Não há modo de layout antigo; reconverta os arquivos baixados.
+
+Em Python:
+
+```python
+from pathlib import Path
+from pdet_fetcher.lake import converter
+
+result = converter.convert(Path("./dados"), Path("./lake"), datasets=["caged"])
+print(result.converted, result.skipped, result.errors)
+```
+
+Para consultar o resultado:
+
+```python
+import duckdb
+
+duckdb.sql("""
+    SELECT ano, mes, count(*) AS movimentacoes
+    FROM read_parquet('./lake/pdet/caged-2020-mov/**/*.parquet',
+                      hive_partitioning = true, hive_types = {'ano': BIGINT, 'mes': VARCHAR})
+    GROUP BY ALL ORDER BY ALL
+""").show()
+```
 
 ---
 
@@ -290,6 +358,7 @@ src/pdet_fetcher/
 ├── fetch.py           # Conexão FTP, listagem e download
 ├── reader.py          # Leitura e tipagem dos CSVs
 ├── wrangling.py       # convert_rais, convert_caged, extract_columns_for_dataset
+├── lake.py            # converter para o lake Parquet (convert / pipeline)
 ├── storage.py         # Convenções de caminhos no destino
 ├── constants.py       # Schemas de colunas, NA values, ragged files
 └── meta.py            # Metadados (caminhos no FTP, padrões de filename)
@@ -307,6 +376,10 @@ CSVs (latin-1 ou utf-8, separador detectado)
 DataFrame Polars com tipos corretos
     ↓  write_parquet
 Parquet
+
+arquivos compactados (.7z, .zip)
+    ↓  convert (lake.py: DuckDB em streaming, latin-1 ou utf-8)
+lake Parquet particionado (ano=/mes=/regiao=)
 ```
 
 ---
@@ -327,6 +400,7 @@ Todas estas funções são importáveis diretamente de `pdet_fetcher`:
 | `convert_rais(data_dir, dest_dir)` | Descompacta e grava RAIS em Parquet. |
 | `convert_caged(data_dir, dest_dir)` | Descompacta e grava CAGED em Parquet. |
 | `extract_columns_for_dataset(...)` | Extrai os nomes de coluna de cada arquivo do dataset. |
+| `pdet_fetcher.lake.converter.convert(input_dir, lake_dir, datasets=None, force=False)` | Converte os arquivos baixados para o lake Parquet e devolve `converted`, `skipped` e `errors`. |
 
 Funções de leitura de baixo nível em `pdet_fetcher.reader`:
 

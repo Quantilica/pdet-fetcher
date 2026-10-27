@@ -22,6 +22,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Ponto de entrada `quantilica.lake` (`pdet`), para ferramentas localizarem o conversor sem importar o pacote.
 - Cada dataset do lake ganha um `_dataset.json` com o descritor (partições e tipos), e cada Parquet leva os metadados de proveniência (`quantilica.*`).
 - O lake lê o Novo CAGED como UTF-8 (como `read_caged`) e os demais datasets como latin-1; a RAIS é lida com `;` e, se o cabeçalho não bater, com `,` (formato de 2026).
+- Dependência `quantilica-core` atualizada para `>=0.13.0` e, no extra `analysis`, `quantilica-analytics` para `>=0.5.0`: são as primeiras versões com o contrato e o escritor do lake.
 
 ## [0.7.0] - 2026-10-21
 

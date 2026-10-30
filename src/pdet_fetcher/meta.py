@@ -127,7 +127,7 @@ datasets = {
                 "path": BASE_PATH + "/RAIS",
                 "dir_pattern": rf"^({year_pattern})$",
                 "dir_pattern_groups": ("year",),
-                "fn_pattern": r"^rais_vinc_pub_(centro_oeste|mg_es_rj|nordeste|norte|sp|sul)\.7z$",
+                "fn_pattern": r"^rais_vinc_pub_(centro_oeste|mg_es_rj|ni|nordeste|norte|sp|sul)\.7z$",
                 "fn_pattern_groups": ("region",),
             },
         ),

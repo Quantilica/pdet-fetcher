@@ -45,3 +45,32 @@ def test_get_date_dirs_no_match():
     results = _get_date_dirs(fi, dir_pattern, dir_pattern_groups)
 
     assert len(results) == 0
+
+
+def test_rais_vinculos_pattern_includes_ni(monkeypatch):
+    """Vínculos sem UF identificada (``RAIS_VINC_PUB_NI.7z``) não podem ser
+    perdidos em silêncio: o arquivo existe de 2022 a 2025 no FTP.
+    """
+    from pdet_fetcher import fetch
+
+    listing = [
+        {"name": f"RAIS_VINC_PUB_{region}.7z", "year": "2025"}
+        for region in (
+            "CENTRO_OESTE",
+            "MG_ES_RJ",
+            "NI",
+            "NORDESTE",
+            "NORTE",
+            "SP",
+            "SUL",
+        )
+    ] + [
+        {"name": "RAIS_ESTAB_PUB.7z", "year": "2025"},
+        {"name": "Leia-me.txt", "year": "2025"},
+    ]
+    monkeypatch.setattr(fetch, "_list_variation_files", lambda variation: iter(listing))
+
+    files = list(fetch._list_dataset_files("rais-vinculos"))
+
+    regions = sorted(f["region"] for f in files)
+    assert regions == ["centrooeste", "mgesrj", "ni", "nordeste", "norte", "sp", "sul"]

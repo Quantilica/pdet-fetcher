@@ -5,6 +5,11 @@ Todas as mudanças notáveis deste projeto serão documentadas neste arquivo.
 O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/),
 e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [0.8.1] - 2026-10-29
+
+### Corrigido
+- O catálogo de `rais-vinculos` passa a incluir `RAIS_VINC_PUB_NI.7z` (vínculos sem UF identificada, publicados de 2022 em diante), que era ignorado sem aviso. No lake, esses arquivos ficam em `regiao=ni`. Rode `sync` para baixar os arquivos que faltam.
+
 ## [0.8.0] - 2026-10-27
 
 ### Alterado

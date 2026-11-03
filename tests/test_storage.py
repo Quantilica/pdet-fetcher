@@ -1,6 +1,6 @@
 """Tests for pdet_fetcher.storage — pure functions, no I/O."""
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pdet_fetcher.storage import (
     get_caged_2020_filename,
@@ -9,6 +9,8 @@ from pdet_fetcher.storage import (
 )
 
 MOCK_DATETIME = datetime(2024, 3, 15)
+TODAY = date.today()
+TODAY_STAMP = TODAY.strftime("%Y%m%d")
 
 
 def _caged_meta(**kwargs):
@@ -82,3 +84,49 @@ class TestGetRaisFilename:
         meta = _rais_meta(year=2022, region="CO")
         result = get_rais_filename(meta)
         assert result == "rais-vinculos_2022-CO@20240315.parquet"
+
+
+class TestFallbackTimestamp:
+    """Tests verifying fallback to today's date when datetime is None."""
+
+    def _caged_meta_no_datetime(self, **kwargs):
+        return {
+            "dataset": "caged",
+            "datetime": None,
+            "extension": "parquet",
+            **kwargs,
+        }
+
+    def _caged_2020_meta_no_datetime(self, **kwargs):
+        return {
+            "dataset": "caged-2020-mov",
+            "datetime": None,
+            "extension": "parquet",
+            **kwargs,
+        }
+
+    def _rais_meta_no_datetime(self, **kwargs):
+        return {
+            "dataset": "rais-vinculos",
+            "datetime": None,
+            "extension": "parquet",
+            **kwargs,
+        }
+
+    def test_path_for_entry_fallback_timestamp_caged(self):
+        """When datetime=None, caged filename gets today's @YYYYMMDD timestamp."""
+        meta = self._caged_meta_no_datetime(year=2022, month=1)
+        result = get_caged_filename(meta)
+        assert result == f"caged_202201@{TODAY_STAMP}.parquet"
+
+    def test_path_for_entry_fallback_timestamp_caged_2020(self):
+        """When datetime=None, caged-2020 filename gets today's @YYYYMMDD timestamp."""
+        meta = self._caged_2020_meta_no_datetime(year=2022, month=1)
+        result = get_caged_2020_filename(meta)
+        assert result == f"caged-2020-mov_202201@{TODAY_STAMP}.parquet"
+
+    def test_path_for_entry_fallback_timestamp_rais(self):
+        """When datetime=None, rais filename gets today's @YYYYMMDD timestamp."""
+        meta = self._rais_meta_no_datetime(year=2022)
+        result = get_rais_filename(meta)
+        assert result == f"rais-vinculos_2022@{TODAY_STAMP}.parquet"

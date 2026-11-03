@@ -14,6 +14,7 @@ from quantilica.cli.sdk import CheckPlanItem, FetcherApp
 from quantilica.cli.ui import get_console, setup_rich_logging
 from quantilica.core.ftp import FtpClient
 from quantilica.core.manifests import manifest_sidecar_path
+from quantilica.core.sync import FreshnessPolicy
 
 from pdet_fetcher import (
     list_caged,
@@ -109,6 +110,7 @@ fetcher = FetcherApp(
     path_builder=pdet_path_builder,
     default_output=_DEFAULT_OUTPUT,
     client=FtpClient(FTP_HOST),
+    freshness_policy=FreshnessPolicy.REMOTE_ONLY,
 )
 
 app = fetcher.app

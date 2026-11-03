@@ -1,3 +1,4 @@
+import datetime as dt
 from pathlib import Path
 
 from quantilica.core.dates import year_month_partition
@@ -74,6 +75,35 @@ class DataRepository(BaseDataRepository):
         filename = get_rais_filename(file_metadata)
         return self.dataset_path(dataset, year, filename)
 
+    def path_for_entry(
+        self,
+        entry: dict,
+        *,
+        last_modified: dt.date | dt.datetime | None = None,
+        precision: str = "date",
+        subdir_by_year: bool = True,
+    ) -> Path:
+        """Compute the destination path for a dataset entry using BaseDataRepository.
+
+        Args:
+            entry: Mapping containing metadata (group, id, ext, year, etc.).
+            last_modified: The last modified timestamp to stamp, or None.
+            precision: The timestamp precision ("date" or "datetime").
+            subdir_by_year: If True and year is present, place under
+                ``{dataset_id}/{year}/``.
+
+        Returns:
+            Path: The computed local path under the storage root.
+        """
+        # Apply fallback timestamp: use today's date when last_modified is None
+        timestamp = last_modified or dt.date.today()
+        return super().path_for_entry(
+            entry,
+            last_modified=timestamp,
+            precision=precision,
+            subdir_by_year=subdir_by_year,
+        )
+
 
 def get_docs_filename(file_metadata: dict) -> str:
     """Generates a stamped filename for documentation files.
@@ -87,7 +117,9 @@ def get_docs_filename(file_metadata: dict) -> str:
     name, _ = file_metadata["name"].rsplit(".", maxsplit=1)
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return stamp_filename(name, extension, modified)
+    # Fallback to today's date when datetime is None
+    timestamp = modified or dt.date.today()
+    return stamp_filename(name, extension, timestamp)
 
 
 def get_docs_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -120,7 +152,11 @@ def get_caged_filename(file_metadata: dict) -> str:
     partition = year_month_partition(year, file_metadata.get("month"))
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return build_stamped_filename(dataset, partition, ext=extension, timestamp=modified)
+    # Fallback to today's date when datetime is None
+    timestamp = modified or dt.date.today()
+    return build_stamped_filename(
+        dataset, partition, ext=extension, timestamp=timestamp
+    )
 
 
 def get_caged_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -164,7 +200,11 @@ def get_caged_2020_filename(file_metadata: dict) -> str:
     partition = year_month_partition(year, month)
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return build_stamped_filename(dataset, partition, ext=extension, timestamp=modified)
+    # Fallback to today's date when datetime is None
+    timestamp = modified or dt.date.today()
+    return build_stamped_filename(
+        dataset, partition, ext=extension, timestamp=timestamp
+    )
 
 
 def get_caged_2020_filepath(file_metadata: dict, dest_dir: Path) -> Path:
@@ -212,7 +252,11 @@ def get_rais_filename(file_metadata: dict) -> str:
         partition = partition + f"-{region}"
     modified = file_metadata["datetime"]
     extension = file_metadata["extension"]
-    return build_stamped_filename(dataset, partition, ext=extension, timestamp=modified)
+    # Fallback to today's date when datetime is None
+    timestamp = modified or dt.date.today()
+    return build_stamped_filename(
+        dataset, partition, ext=extension, timestamp=timestamp
+    )
 
 
 def get_rais_filepath(file_metadata: dict, dest_dir: Path) -> Path:

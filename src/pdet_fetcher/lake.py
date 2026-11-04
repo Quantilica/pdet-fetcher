@@ -26,7 +26,7 @@ from pathlib import Path
 try:
     import duckdb
     from quantilica.analytics.lake import LakeError, LakeWriter
-    from quantilica.core.lake import DatasetDescriptor, file_key
+    from quantilica.core.lake import DatasetDescriptor, file_key, partition_types_for
 except ImportError as exc:
     raise ImportError(
         "pdet_fetcher.lake requer o extra 'analysis': "
@@ -75,9 +75,7 @@ class DatasetSpec:
     @property
     def partition_types(self) -> dict[str, str]:
         """Partition types: the year is a number, the rest stays text."""
-        return {
-            key: "int" if key == "ano" else "varchar" for key in self.partition_keys
-        }
+        return partition_types_for(self.partition_keys)
 
 
 def _slug(text: str) -> str:

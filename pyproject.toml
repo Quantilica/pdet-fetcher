@@ -55,6 +55,8 @@ pdet = "pdet_fetcher.lake:converter"
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.400",
+    "pytest-cov>=7.1",
     "ruff>=0.9.0",
     "pytest>=8.0.0",
     "pytest-mock>=3.12",
@@ -85,3 +87,15 @@ packages = ["src/pdet_fetcher"]
 [build-system]
 requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"
+
+[tool.pyright]
+typeCheckingMode = "basic"
+include = ["src"]
+
+[tool.coverage.run]
+source = ["pdet_fetcher"]
+
+[tool.coverage.report]
+# Cobertura abaixo de 80%: relatório informativo (dispensa temporária, ver planning/notes/2026-11-04-ci-pyright-cobertura-dispensas.md).
+show_missing = true
+skip_covered = true

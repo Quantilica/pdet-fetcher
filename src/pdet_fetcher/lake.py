@@ -26,7 +26,11 @@ from pathlib import Path
 try:
     import duckdb
     from quantilica.analytics.lake import LakeError, LakeWriter
-    from quantilica.core.lake import DatasetDescriptor, file_key, partition_types_for
+    from quantilica.core.lake import (
+        DatasetDescriptor,
+        composite_file_key,
+        partition_types_for,
+    )
 except ImportError as exc:
     raise ImportError(
         "pdet_fetcher.lake requer o extra 'analysis': "
@@ -158,7 +162,7 @@ def ano_regiao_from_path(path: Path | str) -> tuple[str | None, str | None]:
     name, the year folder (``rais-vinculos/2024/...``) is used.
     """
     path = Path(path)
-    match = _ANO_REGIAO.search(file_key(path))
+    match = _ANO_REGIAO.search(composite_file_key(path))
     if match is None:
         return _year_dir(path), None
     return match["ano"], match["regiao"]
@@ -172,7 +176,7 @@ def ano_mes_from_path(path: Path | str) -> tuple[str | None, str | None]:
     (``caged-ajustes_2002.7z``) give ``("2002", None)``.
     """
     path = Path(path)
-    stem = file_key(path)
+    stem = composite_file_key(path)
     match = _ANO_MES.search(stem.rsplit("_", 1)[-1]) or _ANO_MES.search(stem)
     if match:
         return match["ano"], match["mes"]
@@ -210,7 +214,7 @@ def latest_files(dataset_dir: Path) -> list[Path]:
     for path in sorted(dataset_dir.rglob("*")):
         if not path.is_file() or path.suffix.lower() not in ARCHIVE_SUFFIXES:
             continue
-        key = file_key(path)
+        key = composite_file_key(path)
         if key not in newest or _stamp(path) >= _stamp(newest[key]):
             newest[key] = path
     return sorted(newest.values())

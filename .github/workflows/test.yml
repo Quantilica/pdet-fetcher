@@ -27,6 +27,10 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
+      # O teste de ida e volta com .7z real é pulado sem o binário 7z.
+      - name: Install 7z
+        run: sudo apt-get update && (sudo apt-get install -y 7zip || sudo apt-get install -y p7zip-full)
+
       # O índice Quantilica (GitHub Pages) já deu flake de DNS no runner
       # (2026-08-23: rtn e inmet). Três tentativas removem o flake sem
       # esconder erro real de resolução.

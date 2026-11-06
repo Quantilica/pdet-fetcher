@@ -8,6 +8,8 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ## [Não lançado]
 
 ### Alterado
+- README: o programa `7z` (`7zz`/`7za`) é requisito para extrair os arquivos `.7z`; instruções para Fedora, Debian/Ubuntu e Windows.
+- CI: instala o `7z` para que o teste com arquivo `.7z` real não seja pulado.
 - A chave do arquivo bruto no lake passa a ser montada com `composite_file_key` do `quantilica-core` (nome do arquivo e, quando houver, o membro do ZIP), sem mudar as partições.
 
 ## [0.8.3] - 2026-11-04

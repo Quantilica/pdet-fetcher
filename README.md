@@ -63,6 +63,14 @@ uv add 'pdet-fetcher[analysis]' --index https://index.quantilica.com/simple/
 
 **Requisitos**: Python 3.12+ e `7z` no PATH (usado pela conversão para extrair os arquivos `.7z` baixados).
 
+Os microdados da PDET vêm em `.7z`, e a extração usa o programa de sistema `7z` (ou `7zz`/`7za`), que precisa estar no PATH. Sem ele, a conversão falha ao abrir o arquivo. Instalação:
+
+```bash
+sudo dnf install 7zip            # Fedora (7zz/7z)
+sudo apt-get install 7zip        # Debian/Ubuntu recentes (ou p7zip-full nas antigas)
+winget install 7zip.7zip         # Windows (adicione a pasta do 7-Zip ao PATH)
+```
+
 ---
 
 ## CLI

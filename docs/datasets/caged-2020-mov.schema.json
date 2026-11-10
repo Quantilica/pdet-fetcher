@@ -1,0 +1,180 @@
+{
+  "fonte": "pdet",
+  "dataset": "caged-2020-mov",
+  "gerado_em": "2026-11-10T14:24:52+00:00",
+  "particoes": [
+    "ano",
+    "mes"
+  ],
+  "colunas": [
+    {
+      "nome": "competenciamov",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "uf",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "municipio",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "secao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "subclasse",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "saldomovimentacao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cbo2002ocupacao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "categoria",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "graudeinstrucao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "idade",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "horascontratuais",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "racacor",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "sexo",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipoempregador",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipoestabelecimento",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipomovimentacao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipodedeficiencia",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "indtrabintermitente",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "indtrabparcial",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "salario",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tamestabjan",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "indicadoraprendiz",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "origemdainformacao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "competenciadec",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "indicadordeforadoprazo",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "unidadesalariocodigo",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "valorsalariofixo",
+      "tipos": [
+        "string"
+      ]
+    }
+  ],
+  "arquivos": 2
+}

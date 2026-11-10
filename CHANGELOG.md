@@ -7,6 +7,9 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+### Adicionado
+- Documentação dos dados em `docs/`, conforme a norma de documentação dos dados: página da fonte, página e dicionário de todas as variáveis e esquema de referência para cada um dos sete datasets. Um teste a verifica.
+
 ### Alterado
 - README: o programa `7z` (`7zz`/`7za`) é requisito para extrair os arquivos `.7z`; instruções para Fedora, Debian/Ubuntu e Windows.
 - CI: instala o `7z` para que o teste com arquivo `.7z` real não seja pulado.

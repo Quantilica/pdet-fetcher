@@ -1,0 +1,275 @@
+{
+  "fonte": "pdet",
+  "dataset": "rais-estabelecimentos",
+  "gerado_em": "2026-11-10T14:22:45+00:00",
+  "particoes": [
+    "ano"
+  ],
+  "colunas": [
+    {
+      "nome": "bairr_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "estoque",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "municipio",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tamestab",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_ident",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "uf",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "subs_ibge",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "subativ_ibge",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "distrito_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "clas_cnae_95",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "nat_estb",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_estb",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_rais_neg",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "nat_jurid",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_estbl",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairro_fort",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairro_rj",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "reg_adm_df",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_cei_vinc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_pat",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_simples",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "est_clt_out",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "estoque_esta",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairros_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairros_fortaleza",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairros_rj",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_95_classe",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "distritos_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "qtd_vinculos_clt",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "qtd_vinculos_ativos",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "qtd_vinculos_estatutarios",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_cei_vinculado",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_estab_participa_pat",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_rais_negativa",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "natureza_juridica",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regioes_adm_df",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tamanho_estabelecimento",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_estab",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_estab_1",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_atividade_ano",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_2_0_classe",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_2_0_subclasse",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ibge_subsetor",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cep_estab",
+      "tipos": [
+        "string"
+      ]
+    }
+  ],
+  "arquivos": 16
+}

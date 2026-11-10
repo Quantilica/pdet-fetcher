@@ -1,0 +1,264 @@
+{
+  "fonte": "pdet",
+  "dataset": "caged",
+  "gerado_em": "2026-11-10T14:24:52+00:00",
+  "particoes": [
+    "ano",
+    "mes"
+  ],
+  "colunas": [
+    {
+      "nome": "admitidos_desligados",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "competencia_declarada",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "municipio",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ano_declarado",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cbo_2002_ocupacao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_1_0_classe",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_2_0_classe",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_2_0_subclas",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "faixa_empr_inicio_jan",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "grau_instrucao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "qtd_hora_contrat",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ibge_subsetor",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "idade",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_aprendiz",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_portador_defic",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "raca_cor",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "salario_mensal",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "saldo_mov",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "sexo",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tempo_emprego",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_estab",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_defic",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_mov_desagregado",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "uf",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairros_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairros_fortaleza",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairros_rj",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "distritos_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regioes_adm_df",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "mesorregiao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "microrregiao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao_adm_rj",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao_adm_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao_corede",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao_corede_04",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao_gov_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao_senac_pr",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao_senai_pr",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regiao_senai_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "sub_regiao_senai_pr",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_trab_parcial",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_trab_intermitente",
+      "tipos": [
+        "string"
+      ]
+    }
+  ],
+  "arquivos": 2
+}

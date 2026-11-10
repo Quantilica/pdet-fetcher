@@ -1,0 +1,474 @@
+{
+  "fonte": "pdet",
+  "dataset": "rais-vinculos",
+  "gerado_em": "2026-11-10T14:22:45+00:00",
+  "particoes": [
+    "ano",
+    "regiao"
+  ],
+  "colunas": [
+    {
+      "nome": "bairros_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "motivo_desligamento",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "distritos_sp",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vinculo_ativo_31_12",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "faixa_etaria",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "faixa_remun_dezem_sm",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "faixa_remun_media_sm",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "faixa_tempo_emprego",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "grau_instrucao_2005_1985",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "mes_admissao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "mes_desligamento",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "municipio",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "nacionalidade",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_remun_dezembro_sm",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_remun_media_sm",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "sexo_trabalhador",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tamanho_estabelecimento",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tempo_emprego",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_estab",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_estab_1",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_vinculo",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ibge_subatividade",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ibge_subsetor",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cbo_ocupacao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cbo_94_ocupacao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_95_classe",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "faixa_hora_contrat",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "qtd_hora_contr",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "idade",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "natureza_juridica",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_admissao",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairros_fortaleza",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "bairros_rj",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "regioes_adm_df",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_cei_vinculado",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_remun_dezembro_nom",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_remun_media_nom",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_simples",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "causa_afastamento_1",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "causa_afastamento_2",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "causa_afastamento_3",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "mun_trab",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "qtd_dias_afastamento",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cbo_ocupacao_2002",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_2_0_classe",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "cnae_2_0_subclasse",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "escolaridade_apos_2005",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "raca_cor",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_portador_defic",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_defic",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_janeiro_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_fevereiro_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_marco_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_abril_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_maio_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_junho_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_julho_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_agosto_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_setembro_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_outubro_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_novembro_cc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ano_chegada_brasil",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_trab_parcial",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "ind_trab_intermitente",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "tipo_salario",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_salario_contratual",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_janeiro_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_fevereiro_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_marco_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_abril_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_maio_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_junho_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_julho_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_agosto_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_setembro_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_outubro_sc",
+      "tipos": [
+        "string"
+      ]
+    },
+    {
+      "nome": "vl_rem_novembro_sc",
+      "tipos": [
+        "string"
+      ]
+    }
+  ],
+  "arquivos": 17
+}

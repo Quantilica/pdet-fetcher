@@ -64,7 +64,7 @@ dataset:
   - {desde: "2017-01", mudanca: "entram os indicadores de trabalho parcial e intermitente"}
   - {desde: "2018-01", mudanca: "arquivos passam de UF para macrorregião (norte, nordeste, mgesrj, sp, sul, centrooeste)"}
   - {desde: "2022-01", mudanca: "entra a macrorregião ni (não identificado)"}
-  - {desde: "2023-01", mudanca: "republicações em CSV com vírgula, aspas, extensão .COMT e outros nomes de coluna; o conversor não as lê"}
+  - {desde: "2023-01", mudanca: "republicações em CSV com vírgula, aspas, extensão .COMT e outros nomes de coluna; o conversor as lê (ver Conteúdo)"}
   revisado_em: "2026-11-10"
   versao_fetcher: "0.8.3"
 ---
@@ -98,7 +98,7 @@ São microdados individuais, mas a fonte os classifica como não identificados: 
 | Colunas | 77 |
 | Unidades de medida | `vl_remun_dezembro_sm`: salários mínimos; `vl_remun_media_sm`: salários mínimos; `vl_remun_dezembro_nom`: R$; `vl_remun_media_nom`: R$; `vl_salario_contratual`: R$; `tempo_emprego`: meses; `qtd_hora_contr`: horas por semana; `qtd_dias_afastamento`: dias; `vl_rem_janeiro_cc`: R$ (idem os demais meses, sufixos cc e sc) |
 | Dados pessoais | `sexo_trabalhador` (sexo); `raca_cor` (raça/cor); `idade` (idade); `faixa_etaria` (idade (faixa)); `nacionalidade` (nacionalidade); `ano_chegada_brasil` (origem (ano de chegada ao Brasil)); `ind_portador_defic` (saúde (deficiência)); `tipo_defic` (saúde (tipo de deficiência)); `causa_afastamento_1` (saúde/afastamento (acidente, doença, licença); idem causa_afastamento_2 e 3 e qtd_dias_afastamento); `grau_instrucao_2005_1985` (escolaridade; idem escolaridade_apos_2005); `cbo_ocupacao` (ocupação; idem cbo_94_ocupacao e cbo_ocupacao_2002); `vl_remun_dezembro_nom` (renda individual; idem vl_remun_media_nom, as colunas _sm, vl_salario_contratual e vl_rem_<mês>_cc/_sc); `mes_admissao` (datas do vínculo (mês de admissão e de desligamento, tempo de emprego)); `municipio` (localização (município do estabelecimento); idem mun_trab, bairros_*, distritos_sp e regioes_adm_df) |
-| Eras | 1994-01: entram horas contratuais, idade, natureza jurídica do estabelecimento, tipo de admissão e CBO/CNAE de 1994/1995; 1996-01: entram bairros de Fortaleza e do Rio de Janeiro e regiões administrativas do DF; 1999-01: entram remunerações nominais em R$ e indicador de CEI vinculado; 2002-01: entram causas e dias de afastamento e município de trabalho; 2004-01: entra a CNAE 2.0 (classe e subclasse); 2006-01: entram escolaridade pós-2005 e raça/cor; 2007-01: entram indicador e tipo de deficiência; 2015-01: entram as remunerações mensais de janeiro a novembro; 2017-01: entram os indicadores de trabalho parcial e intermitente; 2018-01: arquivos passam de UF para macrorregião (norte, nordeste, mgesrj, sp, sul, centrooeste); 2022-01: entra a macrorregião ni (não identificado); 2023-01: republicações em CSV com vírgula, aspas, extensão .COMT e outros nomes de coluna; o conversor não as lê |
+| Eras | 1994-01: entram horas contratuais, idade, natureza jurídica do estabelecimento, tipo de admissão e CBO/CNAE de 1994/1995; 1996-01: entram bairros de Fortaleza e do Rio de Janeiro e regiões administrativas do DF; 1999-01: entram remunerações nominais em R$ e indicador de CEI vinculado; 2002-01: entram causas e dias de afastamento e município de trabalho; 2004-01: entra a CNAE 2.0 (classe e subclasse); 2006-01: entram escolaridade pós-2005 e raça/cor; 2007-01: entram indicador e tipo de deficiência; 2015-01: entram as remunerações mensais de janeiro a novembro; 2017-01: entram os indicadores de trabalho parcial e intermitente; 2018-01: arquivos passam de UF para macrorregião (norte, nordeste, mgesrj, sp, sul, centrooeste); 2022-01: entra a macrorregião ni (não identificado); 2023-01: republicações em CSV com vírgula, aspas, extensão .COMT e outros nomes de coluna; o conversor as lê (ver Conteúdo) |
 | Revisado em | 2026-11-10 |
 | Versão do fetcher | 0.8.3 |
 
@@ -114,7 +114,7 @@ São microdados individuais, mas a fonte os classifica como não identificados: 
 - Cobertura nominal (listagem do bruto, conferido em 2026-11-10): ano-base de 1985 a 2025; 951 arquivos. 1985 a 1997 têm arquivo por UF (25 a 27 UFs por ano, pois o Tocantins só aparece a partir de 1989 e o Maranhão a partir de 1986) e um de UF ignorada; 1998 a 2017, 27 UFs; 2018 a 2021, 6 macrorregiões; 2022 a 2025, 7 (com `ni`).
 - Amostra convertida para este documento (não é o conjunto inteiro): 16 arquivos/anos (1985, 1994, 1996, 1998, 1999, 2001, 2002, 2003, 2004, 2006, 2007, 2015, 2016, 2017, 2018, 2022); as colunas e a contagem de linhas valem para esses arquivos.
 - Conferência de linhas: em todos os arquivos convertidos o número de linhas do lake é o de linhas do TXT menos o cabeçalho (por exemplo `rais-vinculos_2018-norte`: 3.682.332 linhas).
-- **2023 a 2025 não chegam ao lake.** Os 21 arquivos regionais e de `ni` dessas republicações têm o dado dentro de um arquivo `.COMT`, extensão que o conversor não reconhece; ele os recusa com a mensagem "contains no data files (.csv/.txt)". Conferido em 2026-11-10 nos arquivos `rais-vinculos_2023-centrooeste`, `2023-ni` (2.400 linhas), `2024-ni` (16.544 linhas) e `2025-ni` (6.208 linhas); os demais arquivos de 2023 a 2025 não foram abertos, e supõe-se o mesmo formato.
+- **2023 a 2025: conferidos por amostra.** O dado das republicações está num arquivo com extensão `.COMT` (por exemplo `RAIS_VINC_PUB_NI.COMT`). O conversor o lê (a partir do `quantilica-analytics` 0.11.2; antes recusava o arquivo com "contains no data files"). Foram convertidos e conferidos cinco dos 21 arquivos de 2023 a 2025 no bruto: `2023-ni` (2.400 linhas), `2024-ni` (16.544), `2025-ni` (6.208), `2023-centrooeste` (8.247.439) e `2025-norte` (5.645.037). Em todos o número de linhas do Parquet é igual ao de linhas do arquivo menos o cabeçalho. Os outros 16 arquivos (regiões `mgesrj`, `nordeste`, `sp` e `sul`, mais `centrooeste`, `norte` e `ni` nos anos que faltam) não foram convertidos nem abertos; por isso o estado do dataset segue `parcial`. O esquema de referência (77 colunas) não inclui os nomes novos de 2023 em diante, listados abaixo.
 - Eras do layout (datas por ano-base, conferidas nos layouts oficiais e na amostra): ver a lista `eras` do cabeçalho.
 
 ## Variáveis
@@ -209,10 +209,10 @@ Os nomes das colunas vêm do cabeçalho de cada arquivo, normalizado (minúscula
 - O conversor extrai o TXT do `.7z` com o programa `7z`, lê com o DuckDB (latin-1, separador `;`) e grava todas as colunas como texto. Se o cabeçalho não tem `tempo_emprego`, o arquivo é recusado. Se `;` não acha o cabeçalho, tenta com `,` (formato novo).
 - Renomeação: cabeçalhos com sufixo ` - Código` (formato de 2023 em diante) perdem o sufixo, mas só para nomes que existem nos layouts antigos; os demais ficam com o sufixo ou com o nome novo (ver abaixo).
 - O cabeçalho tem dois títulos iguais (`Tipo Estab`); o segundo vira `tipo_estab_1`.
-- Chave: não há; o vínculo não tem identificador. Nulos: nenhum nas colunas da amostra (os campos vêm preenchidos com `0`, `-1` ou espaços).
-- Linhas: contagem do lake igual à do TXT menos o cabeçalho nos 16 anos amostrados.
+- Chave: não há; o vínculo não tem identificador. Nulos: nenhum nas colunas da amostra de 2022 e antes (os campos vêm preenchidos com `0`, `-1` ou espaços); de 2023 em diante há campos vazios (ver Cuidados de uso).
+- Linhas: contagem do lake igual à do TXT menos o cabeçalho nos 16 anos amostrados. Para 2023 a 2025, igual nos cinco arquivos conferidos (ver Conteúdo).
 
-Colunas das republicações de 2023 em diante (formato que o conversor não lê hoje; nomes obtidos por conversão local do arquivo `2025-ni` com a extensão trocada), com a coluna equivalente nos layouts anteriores:
+Colunas das republicações de 2023 em diante (62 colunas em `2023-ni`, `2024-ni`, `2025-ni`, `2023-centrooeste` e `2025-norte`; mesmo conjunto nos cinco), com a coluna equivalente nos layouts anteriores. Os 20 nomes abaixo não estão no esquema de referência:
 
 | Nome em 2023 em diante | Equivalente anterior |
 |---|---|
@@ -241,7 +241,8 @@ As demais colunas de 2023 em diante têm os mesmos nomes dos layouts de 2022.
 
 ## Cuidados de uso
 
-- **2023 a 2025 não estão no lake** (arquivos `.COMT` recusados pelo conversor). As séries de `rais-vinculos` do lake terminam em 2022. Evidência: ver Conteúdo.
+- **2023 a 2025: só parte está no lake.** O formato novo é lido, mas só cinco dos 21 arquivos de 2023 a 2025 foram convertidos na conferência (ver Conteúdo). As séries por região completas terminam em 2022; confira a partição `ano`/`regiao` antes de assumir cobertura.
+- **Formato dos valores muda em 2023.** Nos arquivos de 2023 em diante os decimais usam ponto (`17.4`, `1835.00`), sem espaços à esquerda (`tempo_emprego` incluído); no arquivo `2022-ni` usam vírgula, com espaços (`     0,7`). Nos cinco arquivos conferidos de 2023 a 2025, parte das colunas `vl_*` vem vazia e vira nula no lake (3,5 milhões de nulos em `2023-centrooeste`), enquanto em `2022-ni` as colunas `vl_*` não têm nulos. Trate vírgula e ponto antes de juntar anos.
 - **Tudo é texto, sem normalização de formato.** O conversor não converte tipos nem tira zeros à esquerda ou espaços: o mesmo código aparece como `1`, `01` ou `000001`, e valores decimais usam vírgula (`0000686,80`). Converta e normalize antes de comparar anos.
 - **O mesmo valor tem formatos diferentes entre anos.** Em 2018-norte, `sexo_trabalhador` e `escolaridade_apos_2005` vêm com 18 espaços à esquerda (`                  01`), em 2017 e 2022 não; `idade` e `qtd_hora_contr` têm espaços à esquerda em alguns anos. Aplique `trim` e converta para inteiro antes de juntar anos.
 - **Mesmo conceito, nomes diferentes.** Nomes de coluna mudam com o layout (`cbo_ocupacao`, `cbo_94_ocupacao`, `cbo_ocupacao_2002`; `vl_rem_*_cc` e `vl_rem_*_sc`; `vl_salario_contratual` só em 2018). Faça a união por conceito, não por nome.

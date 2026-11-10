@@ -11,6 +11,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Documentação dos dados em `docs/`, conforme a norma de documentação dos dados: página da fonte, página e dicionário de todas as variáveis e esquema de referência para cada um dos sete datasets. Um teste a verifica.
 
 ### Alterado
+- Exige `quantilica-analytics>=0.11.2` no extra `analysis`: as versões 0.10.0 a 0.11.1 recusavam os pacotes da RAIS de 2023 em diante, cujo arquivo de dados termina em `.COMT`, e os ZIPs que não têm `.csv` ou `.txt`.
 - README: o programa `7z` (`7zz`/`7za`) é requisito para extrair os arquivos `.7z`; instruções para Fedora, Debian/Ubuntu e Windows.
 - CI: instala o `7z` para que o teste com arquivo `.7z` real não seja pulado.
 - A chave do arquivo bruto no lake passa a ser montada com `composite_file_key` do `quantilica-core` (nome do arquivo e, quando houver, o membro do ZIP), sem mudar as partições.

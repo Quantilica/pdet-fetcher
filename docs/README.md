@@ -4,8 +4,8 @@ O `pdet-fetcher` coleta os microdados da RAIS e do CAGED publicados pelo Program
 
 | Dataset | O que é | Origem (pasta do FTP) | Período | Página |
 |---|---|---|---|---|
-| `rais-vinculos` | Vínculos empregatícios do ano-base | `RAIS/` | 1985 a 2025 (lake até 2022) | [rais-vinculos](datasets/rais-vinculos.md) |
-| `rais-estabelecimentos` | Estabelecimentos do ano-base e o estoque de vínculos | `RAIS/` | 1985 a 2025 (lake até 2022) | [rais-estabelecimentos](datasets/rais-estabelecimentos.md) |
+| `rais-vinculos` | Vínculos empregatícios do ano-base | `RAIS/` | 1985 a 2025 (2023 a 2025 no lake só em parte) | [rais-vinculos](datasets/rais-vinculos.md) |
+| `rais-estabelecimentos` | Estabelecimentos do ano-base e o estoque de vínculos | `RAIS/` | 1985 a 2025 | [rais-estabelecimentos](datasets/rais-estabelecimentos.md) |
 | `caged` | CAGED estatístico: admissões e desligamentos | `CAGED/` | 2007-01 a 2019-12 | [caged](datasets/caged.md) |
 | `caged-ajustes` | Declarações do CAGED fora do prazo | `CAGED_AJUSTES/` | 2002 a 2019-12 | [caged-ajustes](datasets/caged-ajustes.md) |
 | `caged-2020-mov` | Novo CAGED, movimentações dentro do prazo | `NOVO CAGED/` | 2020-01 em diante | [caged-2020-mov](datasets/caged-2020-mov.md) |
@@ -32,6 +32,6 @@ O `pdet-fetcher` coleta os microdados da RAIS e do CAGED publicados pelo Program
 |---|---|---|
 | 2018 | Os arquivos da RAIS passam de UF para macrorregião | `rais-vinculos` |
 | 2020-01 | O CAGED estatístico é substituído pelo Novo CAGED | `caged`, `caged-2020-*` |
-| 2023 | As republicações da RAIS passam a CSV com vírgula e extensão `.COMT`, que o conversor não lê: 2023 a 2025 não estão no lake | `rais-vinculos`, `rais-estabelecimentos` |
+| 2023 | As republicações da RAIS passam a CSV com vírgula e extensão `.COMT` e nomes de coluna novos; o conversor as lê com `quantilica-analytics` 0.11.2 ou superior. Conferidos: `rais-estabelecimentos` 2023 a 2025 e cinco dos 21 arquivos de `rais-vinculos` (`ni` de 2023 a 2025, `2023-centrooeste`, `2025-norte`) | `rais-vinculos`, `rais-estabelecimentos` |
 
 Os códigos categóricos (sexo, raça/cor, escolaridade) não são os mesmos entre RAIS, CAGED estatístico e Novo CAGED; consulte o dicionário de cada página.

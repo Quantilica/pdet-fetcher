@@ -12,7 +12,7 @@ dataset:
   unidade: "estabelecimento declarante da RAIS no ano-base"
   granularidade: {espacial: "município do estabelecimento", temporal: "ano"}
   formato_bruto: "7z (ou ZIP) com um TXT por ano, latin-1, separador ponto e vírgula; republicações de 2023 em diante em CSV com vírgula, aspas e extensão .COMT"
-  lake: {estado: parcial, particoes: [ano], chave: [], colunas: 44}
+  lake: {estado: convertido, particoes: [ano], chave: [], colunas: 44}
   unidades_de_medida:
     estoque: "vínculos"
     est_clt_out: "vínculos"
@@ -29,7 +29,7 @@ dataset:
   - {desde: "2002-01", mudanca: "os nomes das colunas passam a ser os longos (Qtd Vínculos…)"}
   - {desde: "2006-01", mudanca: "entra a CNAE 2.0 (classe e subclasse)"}
   - {desde: "2014-01", mudanca: "entram o CEP do estabelecimento e o subsetor IBGE"}
-  - {desde: "2023-01", mudanca: "republicações em CSV com vírgula e extensão .COMT; o conversor não as lê"}
+  - {desde: "2023-01", mudanca: "republicações em CSV com vírgula e extensão .COMT; o conversor as lê (ver Conteúdo)"}
   revisado_em: "2026-11-10"
   versao_fetcher: "0.8.3"
 ---
@@ -57,13 +57,13 @@ Não há dados pessoais: a unidade é o estabelecimento (CNPJ ou CEI), mas a fon
 | Unidade (uma linha) | estabelecimento declarante da RAIS no ano-base |
 | Granularidade | espacial: município do estabelecimento; temporal: ano |
 | Formato bruto | 7z (ou ZIP) com um TXT por ano, latin-1, separador ponto e vírgula; republicações de 2023 em diante em CSV com vírgula, aspas e extensão .COMT |
-| Estado no lake | parcial |
+| Estado no lake | convertido |
 | Partições | `ano` |
 | Chave | — |
 | Colunas | 44 |
 | Unidades de medida | `estoque`: vínculos; `est_clt_out`: vínculos; `estoque_esta`: vínculos; `qtd_vinculos_clt`: vínculos; `qtd_vinculos_ativos`: vínculos; `qtd_vinculos_estatutarios`: vínculos |
 | Dados pessoais | nenhum |
-| Eras | 1995-01: entram classe CNAE/95, natureza jurídica e indicador de RAIS negativa; 1996-01: entram bairros de Fortaleza e do Rio e regiões administrativas do DF; 1999-01: entram indicadores de CEI vinculado, PAT e SIMPLES; 2001-01: o estoque se divide em CLT e outros e estatutários; 2002-01: os nomes das colunas passam a ser os longos (Qtd Vínculos…); 2006-01: entra a CNAE 2.0 (classe e subclasse); 2014-01: entram o CEP do estabelecimento e o subsetor IBGE; 2023-01: republicações em CSV com vírgula e extensão .COMT; o conversor não as lê |
+| Eras | 1995-01: entram classe CNAE/95, natureza jurídica e indicador de RAIS negativa; 1996-01: entram bairros de Fortaleza e do Rio e regiões administrativas do DF; 1999-01: entram indicadores de CEI vinculado, PAT e SIMPLES; 2001-01: o estoque se divide em CLT e outros e estatutários; 2002-01: os nomes das colunas passam a ser os longos (Qtd Vínculos…); 2006-01: entra a CNAE 2.0 (classe e subclasse); 2014-01: entram o CEP do estabelecimento e o subsetor IBGE; 2023-01: republicações em CSV com vírgula e extensão .COMT; o conversor as lê (ver Conteúdo) |
 | Revisado em | 2026-11-10 |
 | Versão do fetcher | 0.8.3 |
 
@@ -75,11 +75,11 @@ Não há dados pessoais: a unidade é o estabelecimento (CNPJ ou CEI), mas a fon
 
 ## Conteúdo
 
-- Uma linha por estabelecimento e ano. Nos anos amostrados o número de linhas cresce de 1,09 milhão (1985) a 8,3 milhões (2015); a republicação de 2025 tem 13,48 milhões de linhas (lida por conversão local).
+- Uma linha por estabelecimento e ano. Nos anos amostrados o número de linhas cresce de 1,09 milhão (1985) a 8,3 milhões (2015); a republicação de 2025 tem 13,48 milhões de linhas.
 - Cobertura nominal (listagem do bruto, 2026-11-10): ano-base de 1985 a 2025, sem lacunas.
-- Amostra convertida (não é o conjunto inteiro): 16 anos: 1985, 1986, 1989, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002, 2005, 2006, 2015. As colunas e linhas abaixo valem para esses anos.
+- Amostra convertida (não é o conjunto inteiro): 16 anos, mais 2023, 2024 e 2025 (abaixo): 1985, 1986, 1989, 1991, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002, 2005, 2006, 2015. As colunas e linhas abaixo valem para esses anos.
 - Conferência de linhas: em todos os anos convertidos o número de linhas do lake é o do TXT menos o cabeçalho (por exemplo 2015: 8.314.306).
-- **2023 a 2025 não chegam ao lake.** O arquivo de 2025 tem o dado em `RAIS_ESTAB_PUB.COMT`, extensão que o conversor recusa ("contains no data files"). Conferido em 2026-11-10 em 2025; 2023 e 2024 não foram abertos e supõe-se o mesmo formato.
+- **2023 a 2025: convertidos e conferidos.** Os três arquivos do período têm o dado em `RAIS_ESTAB_PUB.COMT`. O conversor os lê (a partir do `quantilica-analytics` 0.11.2; antes recusava o arquivo com "contains no data files"). Em cada um o número de linhas do Parquet é igual ao do arquivo menos o cabeçalho: 2023, 11.768.420; 2024, 13.186.059; 2025, 13.481.949. Os três têm as mesmas 23 colunas, listadas abaixo.
 
 ## Variáveis
 
@@ -139,11 +139,11 @@ Os nomes vêm do cabeçalho de cada arquivo, normalizado. Os layouts mudam muito
 - Cabeçalhos com ` - Código` (2023 em diante) perdem o sufixo apenas para nomes conhecidos.
 - O cabeçalho de 2002 em diante tem dois títulos `Tipo Estab`; o segundo vira `tipo_estab_1`.
 - Chave: não há. Nulos: nenhum nas colunas da amostra.
-- Colunas das republicações de 2023 em diante (obtidas por conversão local do arquivo de 2025 com a extensão trocada): `bairros_sp`, `bairros_fortaleza`, `bairros_rj`, `cnae_2_0_classe`, `cnae_95_classe`, `distritos_sp`, `qtd_vinculos_clt`, `qtd_vinculos_ativos`, `qtd_vinculos_estatutarios`, `ind_atividade_ano`, `ind_cei_vinculado`, `ind_estab_participante_pat` (antes `ind_estab_participa_pat`), `ind_rais_negativa`, `ind_estab_participante_simples` (antes `ind_simples`), `municipio`, `natureza_juridica`, `regiao_adm_df` (antes `regioes_adm_df`), `cnae_2_0_subclasse`, `tamanho_estabelecimento`, `tipo_estabelecimento` (antes `tipo_estab`), `uf`, `ibge_subsetor` e `cep_estab`.
+- Colunas das republicações de 2023 em diante (as mesmas 23 em 2023, 2024 e 2025): `bairros_sp`, `bairros_fortaleza`, `bairros_rj`, `cnae_2_0_classe`, `cnae_95_classe`, `distritos_sp`, `qtd_vinculos_clt`, `qtd_vinculos_ativos`, `qtd_vinculos_estatutarios`, `ind_atividade_ano`, `ind_cei_vinculado`, `ind_estab_participante_pat` (antes `ind_estab_participa_pat`), `ind_rais_negativa`, `ind_estab_participante_simples` (antes `ind_simples`), `municipio`, `natureza_juridica`, `regiao_adm_df` (antes `regioes_adm_df`), `cnae_2_0_subclasse`, `tamanho_estabelecimento`, `tipo_estabelecimento` (antes `tipo_estab`), `uf`, `ibge_subsetor` e `cep_estab`.
 
 ## Cuidados de uso
 
-- **2023 a 2025 não estão no lake** (arquivos `.COMT`). Evidência em Conteúdo.
+- **Lacuna na amostra convertida.** Dos 41 anos do bruto, 19 foram convertidos e conferidos (os 16 da amostra mais 2023, 2024 e 2025); os outros 22 anos não foram convertidos nesta conferência.
 - **Tudo é texto, sem normalização de formato.** O conversor não converte tipos nem tira zeros à esquerda ou espaços: o mesmo código aparece como `1`, `01` ou `000001`, e valores decimais usam vírgula (`0000686,80`). Converta e normalize antes de comparar anos.
 - **Nomes diferentes para o mesmo conceito.** O estoque de vínculos é `estoque` (1985 a 2001), `est_clt_out` e `estoque_esta` (2001) e `qtd_vinculos_*` (2002 em diante); `tamestab` e `tamanho_estabelecimento`; `nat_jurid` e `natureza_juridica`.
 - **Município vs UF.** `uf` falta nos anos 2002, 2005 e 2006 da amostra: derive a UF dos dois primeiros dígitos de `municipio`.

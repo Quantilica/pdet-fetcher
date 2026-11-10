@@ -269,6 +269,71 @@ def test_7z_archive_is_converted(tmp_path: Path, lake: Path) -> None:
     assert scan_dataset(_dataset_dir(lake, "caged")).collect().height == 2
 
 
+def test_rais_comt_member_in_zip_is_converted(tmp_path: Path, lake: Path) -> None:
+    """O membro real das republicações de 2023 em diante termina em ``.COMT``.
+
+    Exige ``quantilica-analytics>=0.11.2``; nas versões 0.10.0 a 0.11.1 a
+    conversão terminava em ``contains no data files (.csv/.txt)``.
+    """
+    root = tmp_path / "raw"
+    _zip(
+        root / "rais-vinculos" / "2025" / "rais-vinculos_2025-centrooeste@20260513.zip",
+        "RAIS_VINC_PUB_CENTRO_OESTE.COMT",
+        RAIS_VINCULOS_2026_CSV,
+        "latin-1",
+    )
+
+    result = converter.convert(root, lake)
+
+    assert (result.converted, result.errors) == (1, [])
+    frame = scan_dataset(_dataset_dir(lake, "rais-vinculos")).collect()
+    assert frame.height == 2
+    assert frame["regiao"].to_list() == ["centrooeste", "centrooeste"]
+    assert "tempo_emprego" in frame.columns
+
+
+@pytest.mark.skipif(SEVEN_ZIP is None, reason="7z not installed")
+@pytest.mark.parametrize(
+    ("dataset_id", "member", "text", "name"),
+    [
+        (
+            "rais-vinculos",
+            "RAIS_VINC_PUB_CENTRO_OESTE.COMT",
+            RAIS_VINCULOS_2026_CSV,
+            "rais-vinculos_2025-centrooeste@20260513.7z",
+        ),
+        (
+            "rais-estabelecimentos",
+            "RAIS_ESTAB_PUB.COMT",
+            '"Município - Código","Qtd Vínculos Ativos"\n"355030","10"\n"330455","7"\n',
+            "rais-estabelecimentos_2025@20260513.7z",
+        ),
+    ],
+)
+def test_7z_comt_member_is_converted(
+    tmp_path: Path, lake: Path, dataset_id: str, member: str, text: str, name: str
+) -> None:
+    """Pacote ``.7z`` real da RAIS 2023 em diante: dado em membro ``.COMT``."""
+    root = tmp_path / "raw"
+    source = tmp_path / "stage" / member
+    source.parent.mkdir()
+    source.write_text(text, encoding="latin-1")
+    archive = root / dataset_id / "2025" / name
+    archive.parent.mkdir(parents=True)
+    subprocess.run(
+        [SEVEN_ZIP, "a", "-bd", str(archive), str(source)],
+        check=True,
+        capture_output=True,
+    )
+
+    result = converter.convert(root, lake)
+
+    assert (result.converted, result.errors) == (1, [])
+    frame = scan_dataset(_dataset_dir(lake, dataset_id)).collect()
+    assert frame.height == 2
+    assert "municipio" in frame.columns
+
+
 # --- conformance and idempotence --------------------------------------------------
 
 

@@ -105,7 +105,7 @@ São microdados individuais, mas a fonte os classifica como não identificados: 
 ## Origem e coleta
 
 - O fetcher baixa os arquivos do FTP do PDET (`ftp://ftp.mtps.gov.br/pdet/microdados/RAIS/`), pasta de microdados de vínculos, e guarda cada um sem alteração em `rais-vinculos/<ano>/rais-vinculos_<ano>[-<região>]@AAAAMMDD.7z`. Antes de 2018 o arquivo é por UF (`-ac`, `-sp`…); de 2018 em diante é por macrorregião (`-norte`, `-nordeste`, `-mgesrj`, `-sp`, `-sul`, `-centrooeste`, e `-ni` desde 2022). Há ainda um arquivo sem região em 1985 a 1997 (`IGNORANDOS<ano>.txt`, vínculos de UF ignorada).
-- Quando a fonte republica um arquivo, o carimbo `@AAAAMMDD` muda e o lake converte só o mais novo (conferido no Drive em 2026-11-10: 951 arquivos, 950 chaves; a chave `rais-vinculos_1986-sp` tem duas versões, de 2026-04-24 e 2026-11-05).
+- Quando a fonte republica um arquivo, o carimbo `@AAAAMMDD` muda e o lake converte só o mais novo (conferido no bruto em 2026-11-10: 951 arquivos, 950 chaves; a chave `rais-vinculos_1986-sp` tem duas versões, de 2026-04-24 e 2026-11-05).
 - O fetcher guarda também a documentação (layouts em XLS por período). O dicionário oficial por ano está nos arquivos `RAIS_vinculos_layout*.xls` da pasta de documentação do FTP.
 
 ## Conteúdo

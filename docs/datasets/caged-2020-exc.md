@@ -79,7 +79,7 @@ São microdados individuais, mas a fonte os classifica como não identificados: 
 ## Origem e coleta
 
 - O fetcher baixa do FTP do PDET (`ftp://ftp.mtps.gov.br/pdet/microdados/NOVO%20CAGED/`) e guarda em `caged-2020-exc/<ano>/caged-2020-exc_AAAAMM@AAAAMMDD.7z`; o lake converte a versão mais recente de cada mês.
-- Conferido no Drive em 2026-11-10: 78 arquivos, uma versão cada, sem lacuna entre 2020-04 e 2026-09.
+- Conferido no bruto em 2026-11-10: 78 arquivos, uma versão cada, sem lacuna entre 2020-04 e 2026-09.
 - Desde janeiro de 2020 o Caged foi substituído pelo eSocial para parte das empresas (Portaria SEPRT 1.127/2019); o Novo CAGED consolida eSocial, Caged e Empregador Web, com imputação de dados de outras fontes em partes do período (documento "Sobre o Novo CAGED"). Os microdados mensais publicados até a competência de setembro de 2021 foram movidos para uma pasta "Legado" no FTP; os arquivos baixados aqui são os da nova consolidação.
 - Há três arquivos por competência: movimentações (`CAGEDMOV`), fora do prazo (`CAGEDFOR`) e excluídas (`CAGEDEXC`), cada um um dataset.
 

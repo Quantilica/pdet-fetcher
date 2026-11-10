@@ -80,7 +80,7 @@ São microdados individuais, mas a fonte os classifica como não identificados: 
 ## Origem e coleta
 
 - O fetcher baixa os arquivos mensais do FTP do PDET (`ftp://ftp.mtps.gov.br/pdet/microdados/CAGED/`) e guarda em `caged/<ano>/caged_AAAAMM@AAAAMMDD.7z`. O lake converte a versão mais recente de cada mês.
-- Conferido no Drive em 2026-11-10: 156 arquivos, de 2007-01 a 2019-12, sem lacuna, uma versão cada.
+- Conferido no bruto em 2026-11-10: 156 arquivos, de 2007-01 a 2019-12, sem lacuna, uma versão cada.
 - O layout oficial é `CAGEDEST_layout_Atualizado.xls` (atualizado em 2018-06-21), na pasta de documentação do FTP.
 
 ## Conteúdo

@@ -80,7 +80,7 @@ São microdados individuais, mas a fonte os classifica como não identificados: 
 ## Origem e coleta
 
 - O fetcher baixa do FTP do PDET (`ftp://ftp.mtps.gov.br/pdet/microdados/CAGED_AJUSTES/`) e guarda em `caged-ajustes/<ano>/caged-ajustes_<ano ou AAAAMM>@AAAAMMDD.7z`.
-- Conferido no Drive em 2026-11-10: 128 arquivos, 8 anuais (2002 a 2009) e 120 mensais (2010-01 a 2019-12, sem lacuna), uma versão cada.
+- Conferido no bruto em 2026-11-10: 128 arquivos, 8 anuais (2002 a 2009) e 120 mensais (2010-01 a 2019-12, sem lacuna), uma versão cada.
 - O layout oficial (`2CAGEDEST_AjustesForaPrazo_layout_Atualizado.xls`) está no FTP, mas o arquivo não pôde ser lido nesta revisão (erro de codificação). As descrições abaixo vêm do layout do CAGED estatístico, que tem as mesmas variáveis; as colunas exclusivas dos ajustes estão marcadas como inferidas.
 
 ## Conteúdo

@@ -70,7 +70,7 @@ Não há dados pessoais: a unidade é o estabelecimento (CNPJ ou CEI), mas a fon
 ## Origem e coleta
 
 - O fetcher baixa os arquivos do FTP do PDET (`ftp://ftp.mtps.gov.br/pdet/microdados/RAIS/`), um por ano, e guarda em `rais-estabelecimentos/<ano>/rais-estabelecimentos_<ano>@AAAAMMDD.7z` (alguns anos vêm em `.zip`). O lake converte a versão mais recente de cada ano.
-- Conferido no Drive em 2026-11-10: 41 arquivos, de 1985 a 2025, uma versão cada.
+- Conferido no bruto em 2026-11-10: 41 arquivos, de 1985 a 2025, uma versão cada.
 - Os layouts por período (`RAIS_estabelecimento_layout*.xls`) estão na pasta de documentação do FTP.
 
 ## Conteúdo

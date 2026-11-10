@@ -14,6 +14,7 @@ from quantilica.cli.sdk import CheckPlanItem, FetcherApp
 from quantilica.cli.ui import get_console, setup_rich_logging
 from quantilica.core.ftp import FtpClient
 from quantilica.core.manifests import manifest_sidecar_path
+from quantilica.core.registry import FetcherInfo
 from quantilica.core.sync import FreshnessPolicy
 
 from pdet_fetcher import (
@@ -104,6 +105,14 @@ def pdet_path_builder(
 fetcher = FetcherApp(
     name="pdet-fetcher",
     help="Microdados do PDET (CAGED, RAIS).",
+    info=FetcherInfo(
+        id="pdet",
+        nome="MTE/PDET - CAGED e RAIS",
+        orgao="Ministério do Trabalho e Emprego (MTE)",
+        homepage="http://pdet.mte.gov.br/microdados-rais-e-caged",
+        cadencia="monthly",
+        dominio="trabalho",
+    ),
     groups_dict=GROUPS,
     aliases_dict={},
     list_datasets=pdet_list_datasets,

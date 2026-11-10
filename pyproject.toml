@@ -30,7 +30,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "quantilica-core>=0.16.0",
+    "quantilica-core>=0.19.0",
 ]
 
 [project.optional-dependencies]
@@ -55,7 +55,7 @@ pdet = "pdet_fetcher.lake:converter"
 
 [dependency-groups]
 dev = [
-    "quantilica-core[docs]>=0.18.0",
+    "quantilica-core[docs]>=0.19.0",
     "pyright>=1.1.400",
     "pytest-cov>=7.1",
     "ruff>=0.9.0",
@@ -63,7 +63,7 @@ dev = [
     "pytest-mock>=3.12",
     # Só para os testes: tests/test_check.py e tests/test_caged_2020.py exercitam o
     # plugin Typer, que depende do host (quantilica-cli). Não são dependências do pacote.
-    "quantilica-cli>=0.15.0",
+    "quantilica-cli>=0.17.0",
     "typer>=0.15.0",
     "rich>=13.0.0",
 ]

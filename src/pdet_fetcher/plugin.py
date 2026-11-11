@@ -109,6 +109,10 @@ fetcher = FetcherApp(
         id="pdet",
         nome="MTE/PDET - CAGED e RAIS",
         orgao="Ministério do Trabalho e Emprego (MTE)",
+        licenca=(
+            "Sem licença declarada; dados públicos pela Lei 12.527/2011 (LAI) "
+            "e Decreto 8.777/2016"
+        ),
         homepage="http://pdet.mte.gov.br/microdados-rais-e-caged",
         cadencia="monthly",
         dominio="trabalho",

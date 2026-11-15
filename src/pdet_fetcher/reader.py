@@ -2,8 +2,10 @@ import collections
 import csv
 import logging
 import re
+import shutil
 import tempfile
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +19,7 @@ except ImportError as exc:
         "--index https://index.quantilica.com/simple/"
     ) from exc
 from quantilica.core.exceptions import ParseError, StorageError
-from quantilica.core.files import decompress_archive
+from quantilica.core.files import decompress_archive, extracted_archive
 
 from .constants import (
     BOOLEAN_CODES,
@@ -433,6 +435,10 @@ def write_parquet(
 def decompress(file_metadata: dict[str, Any]) -> dict[str, Path]:
     """Decompresses an archive file using quantilica.core.files.decompress_archive.
 
+    A pasta temporária (``tmp_dir``) fica por conta do chamador, que deve
+    removê-la. Se a extração falhar, ela é removida aqui antes de a exceção
+    subir. Prefira :func:`extracted_data`, que remove a pasta sempre.
+
     Args:
         file_metadata (dict[str, Any]): A dictionary containing metadata
             for the file, including 'filepath'.
@@ -451,11 +457,45 @@ def decompress(file_metadata: dict[str, Any]) -> dict[str, Path]:
         decompressed_filepath = decompress_archive(
             compressed_filepath, output_dir=tmp_dir
         )
-    except StorageError as exc:
-        raise RuntimeError(
-            f"7z failed decompressing {compressed_filepath}: {exc}"
-        ) from exc
+    except BaseException as exc:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        if isinstance(exc, StorageError):
+            raise RuntimeError(
+                f"7z failed decompressing {compressed_filepath}: {exc}"
+            ) from exc
+        raise
     return file_metadata | {
         "tmp_dir": tmp_dir,
         "decompressed_filepath": decompressed_filepath,
     }
+
+
+@contextmanager
+def extracted_data(file_metadata: dict[str, Any]) -> Iterator[dict[str, Any]]:
+    """Descompacta um ZIP/7z numa pasta que sempre é removida ao sair do ``with``.
+
+    Faz o que :func:`decompress` faz, com a raiz da extração sob a guarda de
+    :func:`quantilica.core.files.extracted_archive`: some em sucesso, em
+    exceção e em interrupção. ``decompressed_filepath`` só vale dentro do bloco.
+
+    Args:
+        file_metadata (dict[str, Any]): Metadados do arquivo, com 'filepath'.
+
+    Yields:
+        dict[str, Any]: Os metadados acrescidos de ``decompressed_filepath``.
+
+    Raises:
+        RuntimeError: Se a extração falhar ou não produzir arquivos de dados.
+    """
+    compressed_filepath = Path(file_metadata["filepath"])
+    logger.info("Decompressing %s", compressed_filepath)
+    with ExitStack() as stack:
+        try:
+            decompressed_filepath = stack.enter_context(
+                extracted_archive(compressed_filepath)
+            )
+        except StorageError as exc:
+            raise RuntimeError(
+                f"7z failed decompressing {compressed_filepath}: {exc}"
+            ) from exc
+        yield file_metadata | {"decompressed_filepath": decompressed_filepath}

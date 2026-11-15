@@ -9,6 +9,14 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Adicionado
 - Testes: identidade do registro conferida.
+- `reader.extracted_data`: descompacta o ZIP/7z numa pasta que sempre é removida ao sair do `with`.
+- Testes: guarda de sessão que falha a suíte se sobrar `pdet*` ou `quantilica_extract_*` no `TMPDIR`.
+
+### Corrigido
+- A conversão da RAIS e do CAGED e `extract_columns_for_dataset` não deixam mais pastas `pdet*` no `/tmp` quando a leitura falha ou é interrompida; `decompress()` também remove a pasta se a extração falhar.
+
+### Alterado
+- Requer `quantilica-core>=0.22.0`.
 
 ## [0.10.0] - 2026-11-14
 

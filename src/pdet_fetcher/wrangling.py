@@ -1,6 +1,5 @@
 import csv
 import logging
-import shutil
 from pathlib import Path
 
 try:
@@ -64,15 +63,14 @@ def convert_rais(data_dir: Path, dest_dir: Path) -> None:
             with pl.StringCache():
                 frames = []
                 for file_metadata in files:
-                    decompressed = reader.decompress(file_metadata)
-                    decompressed_filepath = decompressed["decompressed_filepath"]
-                    df = reader.read_rais(
-                        decompressed_filepath,
-                        year=year,
-                        dataset=dataset,
-                    )
+                    with reader.extracted_data(file_metadata) as extracted:
+                        # read_rais é eager: o DataFrame sobrevive ao bloco.
+                        df = reader.read_rais(
+                            extracted["decompressed_filepath"],
+                            year=year,
+                            dataset=dataset,
+                        )
                     frames.append(df)
-                    shutil.rmtree(decompressed["tmp_dir"])
                 data = pl.concat(frames, how="vertical")
 
             # Com várias UFs não há bruto único: só herda proveniência de 1 arquivo.
@@ -118,24 +116,21 @@ def convert_caged(data_dir: Path, dest_dir: Path) -> None:
 
         dest_filepath.parent.mkdir(parents=True, exist_ok=True)
 
-        decompressed = reader.decompress(file_metadata)
-        decompressed_filepath = decompressed["decompressed_filepath"]
-
-        try:
-            df = reader.read_caged(
-                decompressed_filepath,
-                date=date,
-                dataset=dataset,
-            )
-            reader.write_parquet(
-                df, dest_filepath, source_path=file_metadata["filepath"]
-            )
-        except pl.exceptions.ComputeError as e:
-            logger.error("Error converting %s: %s", decompressed_filepath, e)
-        except pl.exceptions.ShapeError as e:
-            logger.error("Error converting %s: %s", decompressed_filepath, e)
-        finally:
-            shutil.rmtree(decompressed["tmp_dir"])
+        with reader.extracted_data(file_metadata) as extracted:
+            decompressed_filepath = extracted["decompressed_filepath"]
+            try:
+                df = reader.read_caged(
+                    decompressed_filepath,
+                    date=date,
+                    dataset=dataset,
+                )
+                reader.write_parquet(
+                    df, dest_filepath, source_path=file_metadata["filepath"]
+                )
+            except pl.exceptions.ComputeError as e:
+                logger.error("Error converting %s: %s", decompressed_filepath, e)
+            except pl.exceptions.ShapeError as e:
+                logger.error("Error converting %s: %s", decompressed_filepath, e)
 
 
 def extract_columns_for_dataset(
@@ -166,19 +161,16 @@ def extract_columns_for_dataset(
         for file in data_dir.rglob(glob_pattern):
             logger.info("Extracting columns from %s", file)
             file_metadata = reader.parse_filename(file)
-            file_metadata = reader.decompress(file_metadata)
-            decompressed_filepath = file_metadata["decompressed_filepath"]
-
-            df: pl.DataFrame = pl.read_csv(
-                decompressed_filepath,
-                n_rows=1,
-                encoding=encoding,
-                separator=";",
-                has_header=True,
-                infer_schema_length=0,
-            )
+            with reader.extracted_data(file_metadata) as extracted:
+                df: pl.DataFrame = pl.read_csv(
+                    extracted["decompressed_filepath"],
+                    n_rows=1,
+                    encoding=encoding,
+                    separator=";",
+                    has_header=True,
+                    infer_schema_length=0,
+                )
             columns = df.columns
-            shutil.rmtree(file_metadata["tmp_dir"])
 
             logger.info("Found %d columns", len(columns))
             for order, column in enumerate(columns):

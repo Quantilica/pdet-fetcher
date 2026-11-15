@@ -1,0 +1,106 @@
+{
+ "rais-vinculos-legado": {
+  "schema": [
+   [
+    "id_municipio_6",
+    "Categorical"
+   ],
+   [
+    "tempo_emprego",
+    "Float64"
+   ],
+   [
+    "sexo",
+    "Categorical"
+   ],
+   [
+    "valor_remuneracao_dezembro",
+    "Float64"
+   ]
+  ],
+  "rows": [
+   "{\"id_municipio_6\": \"355030\", \"tempo_emprego\": 12.5, \"sexo\": \"1\", \"valor_remuneracao_dezembro\": 1234.56}",
+   "{\"id_municipio_6\": \"330455\", \"tempo_emprego\": 3.0, \"sexo\": \"2\", \"valor_remuneracao_dezembro\": null}"
+  ]
+ },
+ "rais-vinculos-2026": {
+  "schema": [
+   [
+    "id_municipio_6",
+    "Categorical"
+   ],
+   [
+    "tempo_emprego",
+    "Float64"
+   ],
+   [
+    "sexo",
+    "Categorical"
+   ]
+  ],
+  "rows": [
+   "{\"id_municipio_6\": \"355030\", \"tempo_emprego\": 12.5, \"sexo\": \"1\"}",
+   "{\"id_municipio_6\": \"330455\", \"tempo_emprego\": 3.0, \"sexo\": \"2\"}"
+  ]
+ },
+ "rais-estabelecimentos": {
+  "schema": [
+   [
+    "id_municipio_6",
+    "Categorical"
+   ],
+   [
+    "quantidade_vinculos_ativos",
+    "Int64"
+   ]
+  ],
+  "rows": [
+   "{\"id_municipio_6\": \"355030\", \"quantidade_vinculos_ativos\": 10}",
+   "{\"id_municipio_6\": \"330455\", \"quantidade_vinculos_ativos\": 7}"
+  ]
+ },
+ "caged": {
+  "schema": [
+   [
+    "id_municipio_6",
+    "Categorical"
+   ],
+   [
+    "sexo",
+    "Categorical"
+   ],
+   [
+    "salario_mensal",
+    "Float64"
+   ]
+  ],
+  "rows": [
+   "{\"id_municipio_6\": \"355030\", \"sexo\": \"1\", \"salario_mensal\": 1500.0}",
+   "{\"id_municipio_6\": \"330455\", \"sexo\": \"3\", \"salario_mensal\": 2000.0}"
+  ]
+ },
+ "novo-caged": {
+  "schema": [
+   [
+    "competencia_movimentacao",
+    "Int64"
+   ],
+   [
+    "id_municipio_6",
+    "Categorical"
+   ],
+   [
+    "sexo",
+    "Categorical"
+   ],
+   [
+    "salario_mensal",
+    "Float64"
+   ]
+  ],
+  "rows": [
+   "{\"competencia_movimentacao\": 202001, \"id_municipio_6\": \"355030\", \"sexo\": \"1\", \"salario_mensal\": 1500.0}",
+   "{\"competencia_movimentacao\": 202001, \"id_municipio_6\": \"330455\", \"sexo\": \"3\", \"salario_mensal\": 2000.0}"
+  ]
+ }
+}

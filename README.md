@@ -177,9 +177,12 @@ Equivalente em Python:
 from pathlib import Path
 from pdet_fetcher import (
     connect,
-    fetch_rais, fetch_rais_docs,
-    fetch_caged, fetch_caged_docs,
-    fetch_caged_2020, fetch_caged_2020_docs,
+    fetch_rais,
+    fetch_rais_docs,
+    fetch_caged,
+    fetch_caged_docs,
+    fetch_caged_2020,
+    fetch_caged_2020_docs,
 )
 
 ftp = connect()
@@ -203,18 +206,19 @@ from pdet_fetcher.reader import read_rais
 
 # Ler vínculos de emprego (ano 2023)
 df = read_rais(
-    filepath=Path("dados/rais_2023_vinculos.csv"),
-    year=2023,
-    dataset="vinculos"
+    filepath=Path("dados/rais_2023_vinculos.csv"), year=2023, dataset="vinculos"
 )
 
 print(df.schema)
 print(df.head())
 
 # Explorar: Qual é o setor com mais empregados?
-top_setores = df.group_by("cnae_setor").agg(
-    pl.col("id_vinculo").count().alias("n_vinculos")
-).sort("n_vinculos", descending=True).head(10)
+top_setores = (
+    df.group_by("cnae_setor")
+    .agg(pl.col("id_vinculo").count().alias("n_vinculos"))
+    .sort("n_vinculos", descending=True)
+    .head(10)
+)
 
 print(top_setores)
 ```
@@ -244,11 +248,12 @@ df_mov = read_caged(
 )
 
 # Analisar: saldo de emprego por UF
-saldo = df_mov.with_columns(
-    saldo = pl.col("admissoes") - pl.col("demissoes")
-).group_by("uf").agg(
-    pl.col("saldo").sum()
-).sort("saldo", descending=True)
+saldo = (
+    df_mov.with_columns(saldo=pl.col("admissoes") - pl.col("demissoes"))
+    .group_by("uf")
+    .agg(pl.col("saldo").sum())
+    .sort("saldo", descending=True)
+)
 
 print(saldo)
 ```
@@ -266,18 +271,18 @@ dfs = []
 
 for ano in anos:
     df = read_rais(
-        filepath=Path(f"dados/rais_{ano}_vinculos.csv"),
-        year=ano,
-        dataset="vinculos"
+        filepath=Path(f"dados/rais_{ano}_vinculos.csv"), year=ano, dataset="vinculos"
     )
     dfs.append(df)
 
 # Concatenar e analisar série temporal
 df_completo = pl.concat(dfs)
 
-evolucao = df_completo.group_by("ano").agg(
-    total_vinculos=pl.col("id_vinculo").count()
-).sort("ano")
+evolucao = (
+    df_completo.group_by("ano")
+    .agg(total_vinculos=pl.col("id_vinculo").count())
+    .sort("ano")
+)
 
 print(evolucao)
 ```
@@ -430,9 +435,11 @@ from pdet_fetcher.reader import read_rais
 
 df = read_rais(Path("rais_2023_vinculos.csv"), year=2023, dataset="vinculos")
 
-top_setores = df.group_by("cnae_secao").agg(
-    pl.col("id_vinculo").count().alias("empregos")
-).sort("empregos", descending=True)
+top_setores = (
+    df.group_by("cnae_secao")
+    .agg(pl.col("id_vinculo").count().alias("empregos"))
+    .sort("empregos", descending=True)
+)
 
 print(top_setores)
 ```
@@ -444,16 +451,18 @@ import polars as pl
 from pdet_fetcher.reader import read_rais
 from pathlib import Path
 
-df = pl.concat([
-    read_rais(Path(f"rais_{y}_vinculos.csv"), year=y, dataset="vinculos").with_columns(
-        ano=pl.lit(y)
-    )
-    for y in range(2019, 2024)
-])
+df = pl.concat(
+    [
+        read_rais(
+            Path(f"rais_{y}_vinculos.csv"), year=y, dataset="vinculos"
+        ).with_columns(ano=pl.lit(y))
+        for y in range(2019, 2024)
+    ]
+)
 
 evolucao = df.group_by("ano").agg(
     empregos=pl.col("id_vinculo").count(),
-    salario_medio=pl.col("vl_remun_medio_nominal").mean()
+    salario_medio=pl.col("vl_remun_medio_nominal").mean(),
 )
 
 print(evolucao.sort("ano"))
@@ -469,16 +478,19 @@ from pdet_fetcher.reader import read_caged
 # Ler últimos 12 meses (movimentações no prazo)
 arquivos = sorted(Path("dados").glob("cagedmov_*.csv"))[-12:]
 
-df = pl.concat([
-    read_caged(f, date=int(f.stem.split("_")[-1]), dataset="caged-2020-mov")
-    for f in arquivos
-])
+df = pl.concat(
+    [
+        read_caged(f, date=int(f.stem.split("_")[-1]), dataset="caged-2020-mov")
+        for f in arquivos
+    ]
+)
 
-saldo_mensal = df.with_columns(
-    saldo=(pl.col("admissoes") - pl.col("demissoes"))
-).group_by("competencia").agg(
-    saldo_total=pl.col("saldo").sum()
-).sort("competencia")
+saldo_mensal = (
+    df.with_columns(saldo=(pl.col("admissoes") - pl.col("demissoes")))
+    .group_by("competencia")
+    .agg(saldo_total=pl.col("saldo").sum())
+    .sort("competencia")
+)
 
 print(saldo_mensal)
 ```
@@ -491,10 +503,14 @@ from pdet_fetcher.reader import read_rais
 
 df = read_rais(Path("rais_2023_vinculos.csv"), year=2023, dataset="vinculos")
 
-diferenca = df.group_by(["cnae_secao", "ind_sexo_trabalhador"]).agg(
-    salario_medio=pl.col("vl_remun_medio_nominal").mean(),
-    qtd_pessoas=pl.col("id_vinculo").count()
-).sort(["cnae_secao", "ind_sexo_trabalhador"])
+diferenca = (
+    df.group_by(["cnae_secao", "ind_sexo_trabalhador"])
+    .agg(
+        salario_medio=pl.col("vl_remun_medio_nominal").mean(),
+        qtd_pessoas=pl.col("id_vinculo").count(),
+    )
+    .sort(["cnae_secao", "ind_sexo_trabalhador"])
+)
 
 print(diferenca)
 ```

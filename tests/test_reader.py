@@ -23,6 +23,13 @@ class TestDecompress:
         f.write_bytes(b"")
         return {"filepath": f}
 
+    def _tmp_dir(self, tmp_path):
+        # decompress() remove o tmp_dir quando a extração falha: não aponte para
+        # o próprio tmp_path do teste.
+        d = tmp_path / "pdet_tmp"
+        d.mkdir()
+        return d
+
     def test_raises_on_nonzero_returncode(self, tmp_path):
         meta = self._meta(tmp_path)
         with patch(
@@ -31,7 +38,7 @@ class TestDecompress:
         ):
             with patch(
                 "pdet_fetcher.reader.tempfile.mkdtemp",
-                return_value=str(tmp_path),
+                return_value=str(self._tmp_dir(tmp_path)),
             ):
                 with pytest.raises(RuntimeError, match="7z failed"):
                     decompress(meta)
@@ -44,7 +51,7 @@ class TestDecompress:
         ):
             with patch(
                 "pdet_fetcher.reader.tempfile.mkdtemp",
-                return_value=str(tmp_path),
+                return_value=str(self._tmp_dir(tmp_path)),
             ):
                 with pytest.raises(RuntimeError, match="no files"):
                     decompress(meta)

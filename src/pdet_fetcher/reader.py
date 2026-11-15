@@ -11,6 +11,7 @@ from typing import Any
 
 try:
     import polars as pl
+    from quantilica.analytics.reader import read_csv_resilient
     from quantilica.analytics.writer import to_parquet
 except ImportError as exc:
     raise ImportError(
@@ -349,13 +350,13 @@ def read_rais(filepath: Path, year: int, dataset: str, **read_csv_args) -> pl.Da
         columns_names = resolve_rais_vinculos_columns(header)
     else:
         columns_names = resolve_rais_estabelecimentos_columns(header)
-    df = pl.read_csv(
+    df = read_csv_resilient(
         filepath,
         has_header=True,
         new_columns=columns_names,
         separator=separator,
         encoding="latin1",
-        null_values=NA_VALUES,
+        null_values=list(NA_VALUES),
         infer_schema_length=0,
         **read_csv_args,
     )
@@ -396,13 +397,13 @@ def read_caged(
     separator = _sniff_separator(filepath, encoding=encoding)
     header = _read_header(filepath, separator, encoding=encoding)
     columns_names = resolve_caged_columns(header, dataset)
-    df = pl.read_csv(
+    df = read_csv_resilient(
         filepath,
         has_header=True,
         new_columns=columns_names,
         separator=separator,
         encoding=encoding,
-        null_values=NA_VALUES,
+        null_values=list(NA_VALUES),
         infer_schema_length=0,
         **read_csv_args,
     )

@@ -9,6 +9,7 @@ e este projeto adere ao [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
 ### Alterado
 - `read_rais` e `read_caged` leem o CSV por `quantilica.analytics.reader.read_csv_resilient` (com o encoding de cada formato, explícito), em vez de `pl.read_csv`. A saída não muda (teste contra um golden da leitura anterior); a leitura passa a remover bytes nulos de arquivos malformados.
+- CI e infraestrutura alinhados ao template (fetcher-template v0.2.1).
 
 ### Corrigido
 - CI: o pyproject declara o PyPI antes do índice Quantilica (`[[tool.uv.index]]`), e o workflow perde `--index` e `--index-strategy`. Com a estratégia padrão `first-index`, o `uv sync` só consulta o índice para o que não está no PyPI (`quantilica-analytics`) e deixa de receber o 503 intermitente que o GitHub Pages devolve a caminhos inexistentes.
